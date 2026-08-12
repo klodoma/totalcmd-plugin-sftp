@@ -8,7 +8,7 @@
 #include "resource.h"
 #include "utils.h"
 #include "CVTUTF.H"
-#include "afxres.h"
+#include "winres.h"
 #include "cunicode.h"
 #include "ftpdir.h"
 

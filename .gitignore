@@ -1,0 +1,33 @@
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build output
+Debug/
+Release/
+x64/
+x86/
+Win32/
+*.obj
+*.ilk
+*.pdb
+*.idb
+*.exp
+*.lib
+*.log
+*.tlog
+*.iobj
+*.ipdb
+
+# Output plugin binaries
+wfx/
+
+# VS project upgrade artifacts
+Backup/
+UpgradeLog.htm
+UpgradeLog*.XML
+_UpgradeReport_Files/
