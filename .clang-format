@@ -2,3 +2,55 @@ BasedOnStyle: Microsoft
 Language: Cpp
 Standard: c++17
 SortIncludes: false
+
+# Layout
+ColumnLimit: 120
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+NamespaceIndentation: None
+AccessModifierOffset: -4
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+
+# Braces
+BreakBeforeBraces: Allman
+Cpp11BracedListStyle: true
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+
+# Pointers / references
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+
+# Alignment
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignConsecutiveMacros: Consecutive
+AlignTrailingComments: true
+AlignAfterOpenBracket: Align
+AlignOperands: true
+
+# Spacing
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: true
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceBeforeAssignmentOperators: true
+
+# Line breaking
+BinPackArguments: false
+BinPackParameters: false
+BreakConstructorInitializers: BeforeColon
+AllowAllParametersOfDeclarationOnNextLine: false
+PenaltyReturnTypeOnItsOwnLine: 1000
+
+# Comments
+ReflowComments: true
+
+# Includes
+IncludeBlocks: Preserve

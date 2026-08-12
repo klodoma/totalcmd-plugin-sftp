@@ -8,7 +8,7 @@ typedef struct
 {
     char displayname[260];
     SERVERID serverid;
-    void *next;
+    void* next;
     BOOL serverupdated;
     DWORD threadid; // for background threads only!
 } SERVERENTRY, *PSERVERENTRY;
@@ -28,7 +28,7 @@ void InitMultiServer()
     }
 }
 
-int LoadServersFromIni(char *inifilename, char *quickconnectname)
+int LoadServersFromIni(char* inifilename, char* quickconnectname)
 {
     // Retrieve server list
     int servercount = 0;
@@ -43,11 +43,11 @@ int LoadServersFromIni(char *inifilename, char *quickconnectname)
         {
             thisentry->serverupdated = false;
             preventry = thisentry;
-            thisentry = (PSERVERENTRY)(thisentry->next);
+            thisentry = (PSERVERENTRY) (thisentry->next);
         }
     }
     GetPrivateProfileString(NULL, NULL, "", serverlist, sizeof(serverlist), inifilename);
-    char *p = serverlist;
+    char* p = serverlist;
     while (p[0])
     {
         // Each server MUST have the value "server"!!!
@@ -69,12 +69,12 @@ int LoadServersFromIni(char *inifilename, char *quickconnectname)
                         serverfound = true;
                         break;
                     }
-                    thisentry = (PSERVERENTRY)(thisentry->next);
+                    thisentry = (PSERVERENTRY) (thisentry->next);
                 }
             }
             if (!serverfound)
             {
-                newentry = (PSERVERENTRY)malloc(sizeof(SERVERENTRY));
+                newentry = (PSERVERENTRY) malloc(sizeof(SERVERENTRY));
                 if (newentry)
                 {
                     strlcpy(newentry->displayname, p, sizeof(newentry->displayname) - 1);
@@ -105,7 +105,7 @@ int LoadServersFromIni(char *inifilename, char *quickconnectname)
             {
                 if (preventry)
                     preventry->next = NULL;
-                nextentry = (PSERVERENTRY)(thisentry->next);
+                nextentry = (PSERVERENTRY) (thisentry->next);
                 free(thisentry);
                 needrelink = true;
             }
@@ -120,7 +120,7 @@ int LoadServersFromIni(char *inifilename, char *quickconnectname)
                         server_linked_list = thisentry; // the first was deleted
                 }
                 preventry = thisentry;
-                nextentry = (PSERVERENTRY)(thisentry->next);
+                nextentry = (PSERVERENTRY) (thisentry->next);
             }
             thisentry = nextentry;
         }
@@ -128,7 +128,7 @@ int LoadServersFromIni(char *inifilename, char *quickconnectname)
     // add "quick connect" entry as first list item
     if (!updating && quickconnectname)
     {
-        PSERVERENTRY newentry = (PSERVERENTRY)malloc(sizeof(SERVERENTRY));
+        PSERVERENTRY newentry = (PSERVERENTRY) malloc(sizeof(SERVERENTRY));
         if (newentry)
         {
             strcpy(newentry->displayname, quickconnectname);
@@ -145,12 +145,12 @@ int LoadServersFromIni(char *inifilename, char *quickconnectname)
     return servercount;
 }
 
-BOOL DeleteServerFromIni(char *servername, char *inifilename)
+BOOL DeleteServerFromIni(char* servername, char* inifilename)
 {
     return WritePrivateProfileString(servername, NULL, NULL, inifilename);
 }
 
-int CopyMoveServerInIni(char *oldservername, char *newservername, BOOL Move, BOOL OverWrite, char *inifilename)
+int CopyMoveServerInIni(char* oldservername, char* newservername, BOOL Move, BOOL OverWrite, char* inifilename)
 {
     char captlist[1024];
     if (_stricmp(oldservername, newservername) == 0)
@@ -173,7 +173,7 @@ int CopyMoveServerInIni(char *oldservername, char *newservername, BOOL Move, BOO
         // Kill target section to delete fields not present in source section
         DeleteServerFromIni(newservername, inifilename);
 
-        char *pcapt = captlist;
+        char* pcapt = captlist;
         while (pcapt[0])
         {
             char valuebuf[1024];
@@ -196,7 +196,7 @@ void FreeServerList()
         thisentry = server_linked_list;
         while (thisentry)
         {
-            PSERVERENTRY nextentry = (PSERVERENTRY)(thisentry->next);
+            PSERVERENTRY nextentry = (PSERVERENTRY) (thisentry->next);
             if (thisentry->serverid)
                 free(thisentry->serverid);
             free(thisentry);
@@ -205,7 +205,7 @@ void FreeServerList()
     }
 }
 
-SERVERID GetServerIdFromName(char *displayname, DWORD threadid)
+SERVERID GetServerIdFromName(char* displayname, DWORD threadid)
 {
     if (threadid == mainthreadid)
     {
@@ -217,7 +217,7 @@ SERVERID GetServerIdFromName(char *displayname, DWORD threadid)
             {
                 if (_stricmp(thisentry->displayname, displayname) == 0)
                     return thisentry->serverid;
-                thisentry = (PSERVERENTRY)(thisentry->next);
+                thisentry = (PSERVERENTRY) (thisentry->next);
             }
         }
     }
@@ -234,7 +234,7 @@ SERVERID GetServerIdFromName(char *displayname, DWORD threadid)
                 {
                     if (_stricmp(thisentry->displayname, displayname) == 0 && thisentry->threadid == threadid)
                         return thisentry->serverid;
-                    thisentry = (PSERVERENTRY)(thisentry->next);
+                    thisentry = (PSERVERENTRY) (thisentry->next);
                 }
             }
         }
@@ -246,7 +246,7 @@ SERVERID GetServerIdFromName(char *displayname, DWORD threadid)
     return NULL;
 }
 
-BOOL SetServerIdForName(char *displayname, SERVERID newid)
+BOOL SetServerIdForName(char* displayname, SERVERID newid)
 {
     DWORD id = GetCurrentThreadId();
     if (id == mainthreadid)
@@ -264,7 +264,7 @@ BOOL SetServerIdForName(char *displayname, SERVERID newid)
                     thisentry->serverid = newid;
                     return true;
                 }
-                thisentry = (PSERVERENTRY)(thisentry->next);
+                thisentry = (PSERVERENTRY) (thisentry->next);
             }
         }
     }
@@ -290,7 +290,7 @@ BOOL SetServerIdForName(char *displayname, SERVERID newid)
                         {
                             // remove from linked list!
                             if (!preventry)
-                                background_linked_list = (PSERVERENTRY)(thisentry->next);
+                                background_linked_list = (PSERVERENTRY) (thisentry->next);
                             else
                                 preventry->next = thisentry->next;
                             free(thisentry);
@@ -298,10 +298,10 @@ BOOL SetServerIdForName(char *displayname, SERVERID newid)
                         return true;
                     }
                     preventry = thisentry;
-                    thisentry = (PSERVERENTRY)(thisentry->next);
+                    thisentry = (PSERVERENTRY) (thisentry->next);
                 }
             }
-            PSERVERENTRY newentry = (PSERVERENTRY)malloc(sizeof(SERVERENTRY));
+            PSERVERENTRY newentry = (PSERVERENTRY) malloc(sizeof(SERVERENTRY));
             if (newentry)
             {
                 strcpy(newentry->displayname, displayname);
@@ -321,9 +321,9 @@ BOOL SetServerIdForName(char *displayname, SERVERID newid)
     return false;
 }
 
-void GetDisplayNameFromPath(char *Path, char *DisplayName, int maxlen)
+void GetDisplayNameFromPath(char* Path, char* DisplayName, int maxlen)
 {
-    char *p = Path;
+    char* p = Path;
     while (p[0] == '\\' || p[0] == '/')
         p++;
     strlcpy(DisplayName, p, maxlen);
@@ -333,7 +333,7 @@ void GetDisplayNameFromPath(char *Path, char *DisplayName, int maxlen)
     p[0] = 0;
 }
 
-SERVERHANDLE FindFirstServer(char *displayname, int maxlen)
+SERVERHANDLE FindFirstServer(char* displayname, int maxlen)
 {
     if (server_linked_list)
     {
@@ -343,12 +343,12 @@ SERVERHANDLE FindFirstServer(char *displayname, int maxlen)
     return NULL;
 }
 
-SERVERHANDLE FindNextServer(SERVERHANDLE searchhandle, char *displayname, int maxlen)
+SERVERHANDLE FindNextServer(SERVERHANDLE searchhandle, char* displayname, int maxlen)
 {
     if (searchhandle)
     {
-        PSERVERENTRY thisentry = (PSERVERENTRY)(searchhandle);
-        thisentry = (PSERVERENTRY)thisentry->next;
+        PSERVERENTRY thisentry = (PSERVERENTRY) (searchhandle);
+        thisentry = (PSERVERENTRY) thisentry->next;
         if (thisentry)
         {
             strlcpy(displayname, thisentry->displayname, maxlen);

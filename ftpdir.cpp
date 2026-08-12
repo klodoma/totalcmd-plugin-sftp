@@ -2,12 +2,12 @@
 #include "utils.h"
 #include "ftpdir.h"
 
-WCHAR *month[37] = {L"",    L"JAN", L"FEB", L"MAR", L"APR", L"MAY", L"JUN", L"JUL", L"AUG", L"SEP",
+WCHAR* month[37] = {L"",    L"JAN", L"FEB", L"MAR", L"APR", L"MAY", L"JUN", L"JUL", L"AUG", L"SEP",
                     L"OCT", L"NOV", L"DEC", L"",    L"",    L"MÄR", L"",    L"MAI", L"",    L"",
                     L"",    L"",    L"OKT", L"",    L"DEZ", L"",    L"FEV", L"MRZ", L"AVR", L"",
                     L"JUI", L"",    L"",    L"",    L"",    L"",    L""};
 
-BOOL LineContainsonlySlashes(WCHAR *lpStr)
+BOOL LineContainsonlySlashes(WCHAR* lpStr)
 {
     while (lpStr[0] == ' ' || lpStr[0] == '-')
         lpStr++;
@@ -22,7 +22,7 @@ WCHAR upcase(WCHAR ch)
     buf[2] = 0;
     buf[3] = 0;
     CharUpperW(buf);
-    return (WCHAR)buf[0];
+    return (WCHAR) buf[0];
 }
 
 BOOL isadigit(WCHAR ch)
@@ -30,9 +30,9 @@ BOOL isadigit(WCHAR ch)
     return (ch >= '0' && ch <= '9');
 }
 
-BOOL DecodeNumber(WCHAR **s, int *number)
+BOOL DecodeNumber(WCHAR** s, int* number)
 {
-    WCHAR *s1;
+    WCHAR* s1;
     WCHAR ch;
     s1 = *s;
     while (isadigit(s1[0]))
@@ -57,24 +57,24 @@ BOOL DecodeNumber(WCHAR **s, int *number)
     return false;
 }
 
-int get2digits(WCHAR *s)
+int get2digits(WCHAR* s)
 {
     WCHAR buf[4];
     wcslcpy2(buf, s, 2);
     return _wtoi(buf);
 }
 
-int get4digits(WCHAR *s)
+int get4digits(WCHAR* s)
 {
     WCHAR buf[8];
     wcslcpy2(buf, s, 4);
     return _wtoi(buf);
 }
 
-#define s2 "RWXRWXRWX"
+#define s2     "RWXRWXRWX"
 #define szTrim L" \r\n\t"
 
-BOOL check(WCHAR *s1, DWORD *UnixAttr) // Check if s1=Permissions!
+BOOL check(WCHAR* s1, DWORD* UnixAttr) // Check if s1=Permissions!
 {
     int i;
     BOOL found;
@@ -109,10 +109,10 @@ BOOL check(WCHAR *s1, DWORD *UnixAttr) // Check if s1=Permissions!
 d[R----F-]  1 supervis      512 Mar 17 09:45 dl24
 d[R----F-]  1 supervis      512 Mar 17 09:45 dl17
 */
-BOOL NovellUnix(WCHAR *s1)
+BOOL NovellUnix(WCHAR* s1)
 {
     int i;
-    WCHAR *p;
+    WCHAR* p;
     while (s1[0] == ' ')
         s1++;
     BOOL result = (s1[0] == '[');
@@ -131,7 +131,7 @@ BOOL NovellUnix(WCHAR *s1)
     return result;
 }
 
-WCHAR *FindUnixPermissions(WCHAR *lpStr, DWORD *UnixAttr)
+WCHAR* FindUnixPermissions(WCHAR* lpStr, DWORD* UnixAttr)
 {
     int i, imax;
     WCHAR ch;
@@ -158,7 +158,7 @@ WCHAR *FindUnixPermissions(WCHAR *lpStr, DWORD *UnixAttr)
     return NULL;
 }
 
-WCHAR *FindName(WCHAR *szLine)
+WCHAR* FindName(WCHAR* szLine)
 {
     int nIndex;
     WCHAR *pStr, *p;
@@ -204,7 +204,7 @@ WCHAR *FindName(WCHAR *szLine)
     return pStr;
 }
 
-WCHAR *FindNameUnix(WCHAR *szLine, int *link, BOOL longdatetype) /*Search with Date instead of last string*/
+WCHAR* FindNameUnix(WCHAR* szLine, int* link, BOOL longdatetype) /*Search with Date instead of last string*/
                                                                  /*name may contain spaces on MAC ftpd!*/
 {
     int nIndex, i, j, incr;
@@ -213,7 +213,7 @@ WCHAR *FindNameUnix(WCHAR *szLine, int *link, BOOL longdatetype) /*Search with D
     int num;
     WCHAR ch;
     BOOL ok, daybeforemonth, found;
-    WCHAR *result;
+    WCHAR* result;
 
     *link = 0; /*No link*/
     nIndex = wcslen(szLine);
@@ -363,7 +363,7 @@ WCHAR *FindNameUnix(WCHAR *szLine, int *link, BOOL longdatetype) /*Search with D
     return FindName(szLine); /*Do it the 'normal' way*/
 }
 
-__int64 GetSizeFromFront(WCHAR *lpstr)
+__int64 GetSizeFromFront(WCHAR* lpstr)
 {
     WCHAR *pstr, *lpsize;
     __int64 result = -1;
@@ -398,7 +398,7 @@ __int64 GetSizeFromFront(WCHAR *lpstr)
     return result;
 }
 
-void ReadDateTimeSizeUnix(WCHAR *lpS, FILETIME *datetime, __int64 *sizefile)
+void ReadDateTimeSizeUnix(WCHAR* lpS, FILETIME* datetime, __int64* sizefile)
 {
     WCHAR buf[512];
     WCHAR *lp, *lp1, *lp2, *lpsize, *monthpos, *lpstr, *lpyear;
@@ -540,7 +540,7 @@ void ReadDateTimeSizeUnix(WCHAR *lpS, FILETIME *datetime, __int64 *sizefile)
                 { /*Zeit oder Jahr gefunden! -> Tag vor Monat*/
                     if (*sizefile >= 1 && *sizefile <= 31)
                     {
-                        t.wDay = (int)*sizefile;
+                        t.wDay = (int) *sizefile;
                         lpsize--;
                         while (lpsize > lpstr && lpsize[0] == ' ')
                             lpsize--;
@@ -663,9 +663,9 @@ void ReadDateTimeSizeUnix(WCHAR *lpS, FILETIME *datetime, __int64 *sizefile)
     }
 }
 
-void ReadDateTimeSizeUser(WCHAR *lpStr, WCHAR *lpDate, FILETIME *datetime, __int64 *sizefile)
+void ReadDateTimeSizeUser(WCHAR* lpStr, WCHAR* lpDate, FILETIME* datetime, __int64* sizefile)
 {
-    WCHAR *lpSize;
+    WCHAR* lpSize;
     if (lpDate)
     {
         lpSize = lpDate;
@@ -700,8 +700,14 @@ void ReadDateTimeSizeUser(WCHAR *lpStr, WCHAR *lpDate, FILETIME *datetime, __int
     }
 }
 
-BOOL ReadDirLineUNIX(WCHAR *lpStr, WCHAR *thename, int maxlen, __int64 *sizefile, FILETIME *datetime, DWORD *attr,
-                     DWORD *UnixAttr, BOOL longdatetype)
+BOOL ReadDirLineUNIX(WCHAR* lpStr,
+                     WCHAR* thename,
+                     int maxlen,
+                     __int64* sizefile,
+                     FILETIME* datetime,
+                     DWORD* attr,
+                     DWORD* UnixAttr,
+                     BOOL longdatetype)
 {
     WCHAR *pstr, *pstr2, *Permissions;
     int linktest;
