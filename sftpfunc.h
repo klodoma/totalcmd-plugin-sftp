@@ -6,13 +6,13 @@
 #include <vector>
 #include <algorithm>
 
-#define SFTP_OK          0
-#define SFTP_FAILED      1
-#define SFTP_EXISTS      2
-#define SFTP_READFAILED  3
+#define SFTP_OK 0
+#define SFTP_FAILED 1
+#define SFTP_EXISTS 2
+#define SFTP_READFAILED 3
 #define SFTP_WRITEFAILED 4
-#define SFTP_ABORT       5
-#define SFTP_PARTIAL     6
+#define SFTP_ABORT 5
+#define SFTP_PARTIAL 6
 
 extern int PluginNumber;
 extern char s_quickconnect[32];
@@ -59,8 +59,8 @@ typedef struct
     int sendcommandmode;
 
     SOCKET sock;
-    LIBSSH2_SESSION* session;
-    LIBSSH2_SFTP* sftpsession;
+    LIBSSH2_SESSION *session;
+    LIBSSH2_SFTP *sftpsession;
 
     BOOL useagent;
     int protocoltype; // 0 = auto, 1 = IPv4, 2 = IPv6
@@ -98,42 +98,37 @@ typedef struct
     BOOL scpserver64bittemporary; // true=user allowed transfers>2GB
 } tConnectSettings, *pConnectSettings;
 
-void* SftpConnectToServer(char* DisplayName, char* inifilename, pProtectedPassword overridepass);
-void SftpGetServerBasePathW(WCHAR* DisplayName, WCHAR* RelativePath, int maxlen, char* inifilename);
-BOOL SftpConfigureServer(char* DisplayName, char* inifilename);
-int SftpCloseConnection(void* serverid);
-int SftpFindFirstFileW(void* serverid, WCHAR* remotedir, void** davdataptr, char* skippedchar);
-BOOL SftpFindNextFileW(void* serverid, void* davdataptr, WIN32_FIND_DATAW* FindData, char skippedchar);
-int SftpFindClose(void* serverid, void* davdataptr);
+void *SftpConnectToServer(char *DisplayName, char *inifilename, pProtectedPassword overridepass);
+void SftpGetServerBasePathW(WCHAR *DisplayName, WCHAR *RelativePath, int maxlen, char *inifilename);
+BOOL SftpConfigureServer(char *DisplayName, char *inifilename);
+int SftpCloseConnection(void *serverid);
+int SftpFindFirstFileW(void *serverid, WCHAR *remotedir, void **davdataptr, char *skippedchar);
+BOOL SftpFindNextFileW(void *serverid, void *davdataptr, WIN32_FIND_DATAW *FindData, char skippedchar);
+int SftpFindClose(void *serverid, void *davdataptr);
 
-int SftpCreateDirectoryW(void* serverid, WCHAR* Path);
-int SftpRenameMoveFileW(void* serverid, WCHAR* OldName, WCHAR* NewName, BOOL Move, BOOL Overwrite, BOOL isdir);
-int SftpDownloadFileW(void* serverid,
-                      WCHAR* RemoteName,
-                      WCHAR* LocalName,
-                      BOOL alwaysoverwrite,
-                      _int64 filesize,
-                      FILETIME* ft,
-                      BOOL Resume);
-int SftpUploadFileW(void* serverid, WCHAR* LocalName, WCHAR* RemoteName, BOOL Resume, BOOL setattr);
-int SftpDeleteFileW(void* serverid, WCHAR* RemoteName, BOOL isdir);
-int SftpSetAttr(void* serverid, char* RemoteName, int NewAttr);
-int SftpSetDateTimeW(void* serverid, WCHAR* RemoteName, FILETIME* LastWriteTime);
-void SftpGetLastActivePathW(void* serverid, WCHAR* RelativePath, int maxlen);
-BOOL SftpDeleteBeforeUpload(void* serverid);
-BOOL SftpChmodW(void* serverid, WCHAR* RemoteName, WCHAR* chmod);
-BOOL SftpLinkFolderTargetW(void* serverid, WCHAR* RemoteName, int maxlen);
-BOOL SftpQuoteCommand2(void* serverid, char* remotedir, char* cmd, char* reply, int replylen);
-BOOL SftpQuoteCommand2W(void* serverid, WCHAR* remotedir, WCHAR* cmd, char* reply, int replylen);
-BOOL SftpQuoteCommand(void* serverid, char* remotedir, char* cmd);
-void SftpShowPropertiesW(void* serverid, WCHAR* remotename);
-void SftpSetTransferModeW(WCHAR* mode);
-BOOL SftpDetermineTransferModeW(WCHAR* RemoteName);
-BOOL SftpSupportsResume(void* serverid);
-int SftpServerSupportsChecksumsW(void* serverid, WCHAR* RemoteName);
-HANDLE SftpStartFileChecksumW(int ChecksumType, void* serverid, WCHAR* RemoteName);
-int SftpGetFileChecksumResultW(BOOL WantResult, HANDLE ChecksumHandle, void* serverid, char* checksum, int maxlen);
+int SftpCreateDirectoryW(void *serverid, WCHAR *Path);
+int SftpRenameMoveFileW(void *serverid, WCHAR *OldName, WCHAR *NewName, BOOL Move, BOOL Overwrite, BOOL isdir);
+int SftpDownloadFileW(void *serverid, WCHAR *RemoteName, WCHAR *LocalName, BOOL alwaysoverwrite, _int64 filesize,
+                      FILETIME *ft, BOOL Resume);
+int SftpUploadFileW(void *serverid, WCHAR *LocalName, WCHAR *RemoteName, BOOL Resume, BOOL setattr);
+int SftpDeleteFileW(void *serverid, WCHAR *RemoteName, BOOL isdir);
+int SftpSetAttr(void *serverid, char *RemoteName, int NewAttr);
+int SftpSetDateTimeW(void *serverid, WCHAR *RemoteName, FILETIME *LastWriteTime);
+void SftpGetLastActivePathW(void *serverid, WCHAR *RelativePath, int maxlen);
+BOOL SftpDeleteBeforeUpload(void *serverid);
+BOOL SftpChmodW(void *serverid, WCHAR *RemoteName, WCHAR *chmod);
+BOOL SftpLinkFolderTargetW(void *serverid, WCHAR *RemoteName, int maxlen);
+BOOL SftpQuoteCommand2(void *serverid, char *remotedir, char *cmd, char *reply, int replylen);
+BOOL SftpQuoteCommand2W(void *serverid, WCHAR *remotedir, WCHAR *cmd, char *reply, int replylen);
+BOOL SftpQuoteCommand(void *serverid, char *remotedir, char *cmd);
+void SftpShowPropertiesW(void *serverid, WCHAR *remotename);
+void SftpSetTransferModeW(WCHAR *mode);
+BOOL SftpDetermineTransferModeW(WCHAR *RemoteName);
+BOOL SftpSupportsResume(void *serverid);
+int SftpServerSupportsChecksumsW(void *serverid, WCHAR *RemoteName);
+HANDLE SftpStartFileChecksumW(int ChecksumType, void *serverid, WCHAR *RemoteName);
+int SftpGetFileChecksumResultW(BOOL WantResult, HANDLE ChecksumHandle, void *serverid, char *checksum, int maxlen);
 
 void SetFileInfoExtras(pConnectSettings ConnectSettings, pFileInfoExtra info);
-void ResetFileInfoExtras(void* serverid);
-pFileInfoExtra FindFileInfoExtras(WCHAR* RemoteName);
+void ResetFileInfoExtras(void *serverid);
+pFileInfoExtra FindFileInfoExtras(WCHAR *RemoteName);

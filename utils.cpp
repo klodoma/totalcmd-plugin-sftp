@@ -18,32 +18,32 @@ LPTSTR strlcatforwardslash(LPTSTR thedir, int maxlen)
     return thedir;
 }
 
-char* strlcatbackslash(char* thedir, int maxlen)
+char *strlcatbackslash(char *thedir, int maxlen)
 {
-    if (thedir[0] && strlen(thedir) < (DWORD) maxlen)
+    if (thedir[0] && strlen(thedir) < (DWORD)maxlen)
         if (thedir[strlen(thedir) - 1] != '\\')
             strlcat(thedir, "\\", maxlen);
     return thedir;
 }
 
-WCHAR* wcslcatbackslash(WCHAR* thedir, int maxlen)
+WCHAR *wcslcatbackslash(WCHAR *thedir, int maxlen)
 {
-    if (thedir[0] && wcslen(thedir) < (DWORD) maxlen)
+    if (thedir[0] && wcslen(thedir) < (DWORD)maxlen)
         if (thedir[wcslen(thedir) - 1] != '\\')
             wcsncat(thedir, L"\\", maxlen);
     return thedir;
 }
 
-void cutlastbackslash(char* thedir)
+void cutlastbackslash(char *thedir)
 {
     int l = strlen(thedir);
     if (l && thedir[l - 1] == '\\')
         thedir[l - 1] = 0;
 }
 
-char* strlcpy(char* p, const char* p2, int maxlen)
+char *strlcpy(char *p, const char *p2, int maxlen)
 {
-    if ((int) strlen(p2) >= maxlen)
+    if ((int)strlen(p2) >= maxlen)
     {
         strncpy(p, p2, maxlen);
         p[maxlen] = 0;
@@ -53,9 +53,9 @@ char* strlcpy(char* p, const char* p2, int maxlen)
     return p;
 }
 
-WCHAR* wcslcpy2(WCHAR* p, const WCHAR* p2, int maxlen)
+WCHAR *wcslcpy2(WCHAR *p, const WCHAR *p2, int maxlen)
 {
-    if ((int) wcslen(p2) >= maxlen)
+    if ((int)wcslen(p2) >= maxlen)
     {
         wcsncpy(p, p2, maxlen);
         p[maxlen] = 0;
@@ -68,14 +68,14 @@ WCHAR* wcslcpy2(WCHAR* p, const WCHAR* p2, int maxlen)
 // strlcat is different from strncat:
 // strncat wants maximum number of bytes to copy
 // strlcat wants maximum size of target buffer!!!
-char* strlcat(char* p, const char* p2, int maxlen)
+char *strlcat(char *p, const char *p2, int maxlen)
 {
     return strncat(p, p2, maxlen - strlen(p));
 }
 
-char* ReplaceBackslashBySlash(char* thedir)
+char *ReplaceBackslashBySlash(char *thedir)
 {
-    char* p;
+    char *p;
     p = thedir;
     while (p[0])
     {
@@ -86,9 +86,9 @@ char* ReplaceBackslashBySlash(char* thedir)
     return thedir;
 }
 
-WCHAR* ReplaceBackslashBySlashW(WCHAR* thedir)
+WCHAR *ReplaceBackslashBySlashW(WCHAR *thedir)
 {
-    WCHAR* p;
+    WCHAR *p;
     p = thedir;
     while (p[0])
     {
@@ -99,9 +99,9 @@ WCHAR* ReplaceBackslashBySlashW(WCHAR* thedir)
     return thedir;
 }
 
-char* ReplaceSlashByBackslash(char* thedir)
+char *ReplaceSlashByBackslash(char *thedir)
 {
-    char* p;
+    char *p;
     p = thedir;
     while (p[0])
     {
@@ -112,9 +112,9 @@ char* ReplaceSlashByBackslash(char* thedir)
     return thedir;
 }
 
-WCHAR* ReplaceSlashByBackslashW(WCHAR* thedir)
+WCHAR *ReplaceSlashByBackslashW(WCHAR *thedir)
 {
-    WCHAR* p;
+    WCHAR *p;
     p = thedir;
     while (p[0])
     {
@@ -125,14 +125,14 @@ WCHAR* ReplaceSlashByBackslashW(WCHAR* thedir)
     return thedir;
 }
 
-int conv2bytes(char* p)
+int conv2bytes(char *p)
 {
     char buf[16];
     strlcpy(buf, p, 2);
     return atoi(buf);
 }
 
-BOOL ConvertIsoDateToDateTime(char* pdatetimefield, FILETIME* ft)
+BOOL ConvertIsoDateToDateTime(char *pdatetimefield, FILETIME *ft)
 {
     SYSTEMTIME st;
     FILETIME ft2;
@@ -158,9 +158,9 @@ BOOL ConvertIsoDateToDateTime(char* pdatetimefield, FILETIME* ft)
     }
 }
 
-BOOL UnixTimeToLocalTime(time_t* mtime, LPFILETIME ft)
+BOOL UnixTimeToLocalTime(time_t *mtime, LPFILETIME ft)
 {
-    struct tm* fttm = gmtime(mtime);
+    struct tm *fttm = gmtime(mtime);
     SYSTEMTIME st;
     FILETIME ft2;
 
@@ -182,7 +182,7 @@ BOOL UnixTimeToLocalTime(time_t* mtime, LPFILETIME ft)
         return false;
 }
 
-void Conv2Chars(char* buf, int nr)
+void Conv2Chars(char *buf, int nr)
 {
     if (nr <= 9)
     {
@@ -195,7 +195,7 @@ void Conv2Chars(char* buf, int nr)
     }
 }
 
-BOOL CreateIsoDateString(FILETIME* ft, char* buf)
+BOOL CreateIsoDateString(FILETIME *ft, char *buf)
 {
     SYSTEMTIME datetime;
     FILETIME ft2;
@@ -236,11 +236,11 @@ static WORD crctable_palm[256] = {
     0x1CE0, 0x0CC1, 0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74,
     0x2E93, 0x3EB2, 0x0ED1, 0x1EF0};
 
-WORD Crc16CalcBlock(char* p, int len, WORD crc16)
+WORD Crc16CalcBlock(char *p, int len, WORD crc16)
 {
     while (len > 0)
     {
-        crc16 = (crc16 << 8) ^ crctable_palm[(unsigned char) ((crc16 >> 8) ^ (unsigned char) *p++)];
+        crc16 = (crc16 << 8) ^ crctable_palm[(unsigned char)((crc16 >> 8) ^ (unsigned char)*p++)];
         len--;
     }
     return crc16;
@@ -253,14 +253,14 @@ char EncodeMIME(unsigned char ch)
     return MimeTable[ch & 0x3F];
 }
 
-void EncodeMimeTriple(char* inbuf, int j, char* outbuf)
+void EncodeMimeTriple(char *inbuf, int j, char *outbuf)
 {
     unsigned char c1, c2, c3, c4;
     outbuf[4] = 0;
-    c1 = (unsigned char) (inbuf[0]) >> 2;
-    c2 = (((unsigned char) (inbuf[0]) << 4) & 0x30) | (((unsigned char) (inbuf[1]) >> 4) & 0xF);
-    c3 = (((unsigned char) (inbuf[1]) << 2) & 0x3C) | (((unsigned char) (inbuf[2]) >> 6) & 0x3);
-    c4 = ((unsigned char) (inbuf[2]) & 0x3F);
+    c1 = (unsigned char)(inbuf[0]) >> 2;
+    c2 = (((unsigned char)(inbuf[0]) << 4) & 0x30) | (((unsigned char)(inbuf[1]) >> 4) & 0xF);
+    c3 = (((unsigned char)(inbuf[1]) << 2) & 0x3C) | (((unsigned char)(inbuf[2]) >> 6) & 0x3);
+    c4 = ((unsigned char)(inbuf[2]) & 0x3F);
     outbuf[0] = EncodeMIME(c1);
     outbuf[1] = EncodeMIME(c2);
     if (j > 1)
@@ -273,7 +273,7 @@ void EncodeMimeTriple(char* inbuf, int j, char* outbuf)
         outbuf[3] = '=';
 }
 
-void MimeEncode(char* inputstr, char* outputstr, int maxlen)
+void MimeEncode(char *inputstr, char *outputstr, int maxlen)
 {
     char bufin[8];
     char buf[8];
@@ -304,29 +304,29 @@ static const short base64_reverse_table[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
-int MimeDecode(char* inputstr, int srclen, char* outputstr, int maxlen)
+int MimeDecode(char *inputstr, int srclen, char *outputstr, int maxlen)
 {
     unsigned char *s, *d;
     short v;
     int i = 0, len = 0;
-    d = (unsigned char*) outputstr;
+    d = (unsigned char *)outputstr;
 
-    for (s = (unsigned char*) inputstr; ((char*) s) < (inputstr + srclen); s++)
+    for (s = (unsigned char *)inputstr; ((char *)s) < (inputstr + srclen); s++)
     {
         if ((v = base64_reverse_table[*s]) < 0)
             continue;
         switch (i % 4)
         {
         case 0:
-            d[len] = (unsigned char) (v << 2);
+            d[len] = (unsigned char)(v << 2);
             break;
         case 1:
             d[len++] |= v >> 4;
-            d[len] = (unsigned char) (v << 4);
+            d[len] = (unsigned char)(v << 4);
             break;
         case 2:
             d[len++] |= v >> 2;
-            d[len] = (unsigned char) (v << 6);
+            d[len] = (unsigned char)(v << 6);
             break;
         case 3:
             d[len++] |= v;
@@ -339,7 +339,7 @@ int MimeDecode(char* inputstr, int srclen, char* outputstr, int maxlen)
     return len;
 }
 
-void ReplaceEnvVars(char* buf, int buflen) // Replace %name% by environment variable
+void ReplaceEnvVars(char *buf, int buflen) // Replace %name% by environment variable
 {
     char buf2[1024];
     char envname[MAX_PATH], envbuf[MAX_PATH];
@@ -378,10 +378,10 @@ void ReplaceEnvVars(char* buf, int buflen) // Replace %name% by environment vari
     } while (p1);
 }
 
-void ReplaceSubString(char* buf, const char* fromstr, const char* tostr, int maxlen)
+void ReplaceSubString(char *buf, const char *fromstr, const char *tostr, int maxlen)
 {
     char buf2[1024];
-    char* p;
+    char *p;
     int L = strlen(fromstr);
     int L2 = strlen(tostr);
     if (L == 0) // nothing to do
@@ -402,7 +402,7 @@ void ReplaceSubString(char* buf, const char* fromstr, const char* tostr, int max
     }
 }
 
-BOOL ParseAddress(char* serverstring, char* addr, unsigned short* port, int defport)
+BOOL ParseAddress(char *serverstring, char *addr, unsigned short *port, int defport)
 {
     char tmp[MAX_PATH];
     char *p, *t;
@@ -449,19 +449,19 @@ BOOL ParseAddress(char* serverstring, char* addr, unsigned short* port, int defp
     }
 }
 
-BOOL IsNumericIPv6(char* addr)
+BOOL IsNumericIPv6(char *addr)
 {
-    char* p = strchr(addr, ':');
-    char* t = strrchr(addr, ':');
+    char *p = strchr(addr, ':');
+    char *t = strrchr(addr, ':');
     if (p && p == t)
         return FALSE;
     else
         return (p != NULL);
 }
 
-int countdots(WCHAR* buf)
+int countdots(WCHAR *buf)
 {
-    WCHAR* p;
+    WCHAR *p;
     int retval;
 
     p = buf;
@@ -475,7 +475,7 @@ int countdots(WCHAR* buf)
     return retval;
 }
 
-bool filematchw(WCHAR* swild, WCHAR* slbox)
+bool filematchw(WCHAR *swild, WCHAR *slbox)
 {
     WCHAR pattern[260], buffer[260];
     WCHAR *ppat, *pbuf, *pendbuf, *PosOfStar;
@@ -538,9 +538,9 @@ bool filematchw(WCHAR* swild, WCHAR* slbox)
     return retval;
 }
 
-WCHAR* wcstok2_p0;
+WCHAR *wcstok2_p0;
 
-WCHAR* wcstok2(WCHAR* name)
+WCHAR *wcstok2(WCHAR *name)
 {
     WCHAR *p1, *p2, *p3, *retval;
     if (name)
@@ -553,9 +553,9 @@ WCHAR* wcstok2(WCHAR* name)
     if (p3)
         if (!p2)
             p2 = p3;
-        else if ((DWORD) (p2) > (DWORD) (p3))
+        else if ((DWORD)(p2) > (DWORD)(p3))
             p2 = p3;
-    if (!p1 || (p2 && (DWORD) (p1) > (DWORD) (p2)))
+    if (!p1 || (p2 && (DWORD)(p1) > (DWORD)(p2)))
     {
         retval = wcstok2_p0;
         wcstok2_p0 = p2;
@@ -583,7 +583,7 @@ WCHAR* wcstok2(WCHAR* name)
     return retval;
 }
 
-bool MultiFileMatchW(WCHAR* wild, WCHAR* name)
+bool MultiFileMatchW(WCHAR *wild, WCHAR *name)
 {
     WCHAR sincl[1024];
     WCHAR *swild, *p;
@@ -624,7 +624,7 @@ bool MultiFileMatchW(WCHAR* wild, WCHAR* name)
     return io;
 }
 
-void RemoveDoubleSpaces(char* s)
+void RemoveDoubleSpaces(char *s)
 {
     if (s == NULL)
         return;
@@ -647,7 +647,7 @@ void RemoveDoubleSpaces(char* s)
     s[count] = 0;
 }
 
-bool IsNumeric(char* s, unsigned int len)
+bool IsNumeric(char *s, unsigned int len)
 {
     if (s == NULL)
         return false;
@@ -656,19 +656,19 @@ bool IsNumeric(char* s, unsigned int len)
 
     for (unsigned int i = 0; i < len; i++)
     {
-        if (isdigit((unsigned char) s[i]) == 0)
+        if (isdigit((unsigned char)s[i]) == 0)
             return false;
     }
 
     return true;
 }
 
-int EscapeWithDoubleQuotes(char* target, char* src, int maxlen)
+int EscapeWithDoubleQuotes(char *target, char *src, int maxlen)
 {
     target[0] = '"';
-    char* psrc = src;
-    char* ptrg = target + 1;
-    char* pend = ptrg + maxlen - 2;
+    char *psrc = src;
+    char *ptrg = target + 1;
+    char *pend = ptrg + maxlen - 2;
     char ch;
     while (true)
     {

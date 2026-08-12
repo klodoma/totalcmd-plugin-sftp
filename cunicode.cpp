@@ -26,7 +26,7 @@ BOOL usys()
     return (usysychecked == 1);
 }
 
-char* walcopy(char* outname, WCHAR* inname, int maxlen)
+char *walcopy(char *outname, WCHAR *inname, int maxlen)
 {
     if (inname)
     {
@@ -38,7 +38,7 @@ char* walcopy(char* outname, WCHAR* inname, int maxlen)
         return NULL;
 }
 
-char* walcopyCP(int codepage, char* outname, WCHAR* inname, int maxlen)
+char *walcopyCP(int codepage, char *outname, WCHAR *inname, int maxlen)
 {
     if (inname)
     {
@@ -50,7 +50,7 @@ char* walcopyCP(int codepage, char* outname, WCHAR* inname, int maxlen)
         return NULL;
 }
 
-WCHAR* awlcopy(WCHAR* outname, char* inname, int maxlen)
+WCHAR *awlcopy(WCHAR *outname, char *inname, int maxlen)
 {
     if (inname)
     {
@@ -62,7 +62,7 @@ WCHAR* awlcopy(WCHAR* outname, char* inname, int maxlen)
         return NULL;
 }
 
-WCHAR* awlcopyCP(int codepage, WCHAR* outname, char* inname, int maxlen)
+WCHAR *awlcopyCP(int codepage, WCHAR *outname, char *inname, int maxlen)
 {
     if (inname)
     {
@@ -74,9 +74,9 @@ WCHAR* awlcopyCP(int codepage, WCHAR* outname, char* inname, int maxlen)
         return NULL;
 }
 
-WCHAR* wcslcpy(WCHAR* str1, const WCHAR* str2, int imaxlen)
+WCHAR *wcslcpy(WCHAR *str1, const WCHAR *str2, int imaxlen)
 {
-    if ((int) wcslen(str2) >= imaxlen - 1)
+    if ((int)wcslen(str2) >= imaxlen - 1)
     {
         wcsncpy(str1, str2, imaxlen - 1);
         str1[imaxlen - 1] = 0;
@@ -86,10 +86,10 @@ WCHAR* wcslcpy(WCHAR* str1, const WCHAR* str2, int imaxlen)
     return str1;
 }
 
-WCHAR* wcslcat(wchar_t* str1, const WCHAR* str2, int imaxlen)
+WCHAR *wcslcat(wchar_t *str1, const WCHAR *str2, int imaxlen)
 {
-    int l1 = (int) wcslen(str1);
-    if ((int) wcslen(str2) + l1 >= imaxlen - 1)
+    int l1 = (int)wcslen(str1);
+    if ((int)wcslen(str2) + l1 >= imaxlen - 1)
     {
         wcsncpy(str1 + l1, str2, imaxlen - 1 - l1);
         str1[imaxlen - 1] = 0;
@@ -100,7 +100,7 @@ WCHAR* wcslcat(wchar_t* str1, const WCHAR* str2, int imaxlen)
 }
 
 // return true if name wasn't cut
-BOOL MakeExtraLongNameW(WCHAR* outbuf, const WCHAR* inbuf, int maxlen)
+BOOL MakeExtraLongNameW(WCHAR *outbuf, const WCHAR *inbuf, int maxlen)
 {
     if (wcslen(inbuf) > 259)
     {
@@ -109,15 +109,14 @@ BOOL MakeExtraLongNameW(WCHAR* outbuf, const WCHAR* inbuf, int maxlen)
     }
     else
         wcslcpy(outbuf, inbuf, maxlen);
-    return (int) wcslen(inbuf) + 4 <= maxlen;
+    return (int)wcslen(inbuf) + 4 <= maxlen;
 }
 
 /***********************************************************************************************/
 
-void copyfinddatawa(WIN32_FIND_DATA* lpFindFileDataA, WIN32_FIND_DATAW* lpFindFileDataW)
+void copyfinddatawa(WIN32_FIND_DATA *lpFindFileDataA, WIN32_FIND_DATAW *lpFindFileDataW)
 {
-    walcopy(lpFindFileDataA->cAlternateFileName,
-            lpFindFileDataW->cAlternateFileName,
+    walcopy(lpFindFileDataA->cAlternateFileName, lpFindFileDataW->cAlternateFileName,
             sizeof(lpFindFileDataW->cAlternateFileName) - 1);
     walcopy(lpFindFileDataA->cFileName, lpFindFileDataW->cFileName, sizeof(lpFindFileDataW->cFileName) - 1);
     lpFindFileDataA->dwFileAttributes = lpFindFileDataW->dwFileAttributes;
@@ -130,10 +129,9 @@ void copyfinddatawa(WIN32_FIND_DATA* lpFindFileDataA, WIN32_FIND_DATAW* lpFindFi
     lpFindFileDataA->nFileSizeLow = lpFindFileDataW->nFileSizeLow;
 }
 
-void copyfinddataaw(WIN32_FIND_DATAW* lpFindFileDataW, WIN32_FIND_DATA* lpFindFileDataA)
+void copyfinddataaw(WIN32_FIND_DATAW *lpFindFileDataW, WIN32_FIND_DATA *lpFindFileDataA)
 {
-    awlcopy(lpFindFileDataW->cAlternateFileName,
-            lpFindFileDataA->cAlternateFileName,
+    awlcopy(lpFindFileDataW->cAlternateFileName, lpFindFileDataA->cAlternateFileName,
             countof(lpFindFileDataW->cAlternateFileName) - 1);
     awlcopy(lpFindFileDataW->cFileName, lpFindFileDataA->cFileName, countof(lpFindFileDataW->cFileName) - 1);
     lpFindFileDataW->dwFileAttributes = lpFindFileDataA->dwFileAttributes;
@@ -148,7 +146,7 @@ void copyfinddataaw(WIN32_FIND_DATAW* lpFindFileDataW, WIN32_FIND_DATA* lpFindFi
 
 /***********************************************************************************************/
 
-int ProgressProcT(int PluginNr, WCHAR* SourceName, WCHAR* TargetName, int PercentDone)
+int ProgressProcT(int PluginNr, WCHAR *SourceName, WCHAR *TargetName, int PercentDone)
 {
     if (ProgressProcW)
     {
@@ -163,7 +161,7 @@ int ProgressProcT(int PluginNr, WCHAR* SourceName, WCHAR* TargetName, int Percen
         return 0;
 }
 
-void LogProcT(int PluginNr, int MsgType, WCHAR* LogString)
+void LogProcT(int PluginNr, int MsgType, WCHAR *LogString)
 {
     if (LogProcW)
     {
@@ -176,7 +174,7 @@ void LogProcT(int PluginNr, int MsgType, WCHAR* LogString)
     }
 }
 
-BOOL RequestProcT(int PluginNr, int RequestType, WCHAR* CustomTitle, WCHAR* CustomText, WCHAR* ReturnedText, int maxlen)
+BOOL RequestProcT(int PluginNr, int RequestType, WCHAR *CustomTitle, WCHAR *CustomText, WCHAR *ReturnedText, int maxlen)
 {
     if (RequestProcW)
     {
@@ -185,13 +183,9 @@ BOOL RequestProcT(int PluginNr, int RequestType, WCHAR* CustomTitle, WCHAR* Cust
     else if (RequestProc)
     {
         char buf1[MAX_PATH], buf2[MAX_PATH], buf3[MAX_PATH];
-        char* preturn = wafilenamecopy(buf3, ReturnedText);
-        BOOL retval = RequestProc(PluginNr,
-                                  RequestType,
-                                  wafilenamecopy(buf1, CustomTitle),
-                                  wafilenamecopy(buf2, CustomText),
-                                  preturn,
-                                  maxlen);
+        char *preturn = wafilenamecopy(buf3, ReturnedText);
+        BOOL retval = RequestProc(PluginNr, RequestType, wafilenamecopy(buf1, CustomTitle),
+                                  wafilenamecopy(buf2, CustomText), preturn, maxlen);
         if (retval && preturn)
             awlcopy(ReturnedText, preturn, maxlen);
         return retval;
@@ -200,7 +194,7 @@ BOOL RequestProcT(int PluginNr, int RequestType, WCHAR* CustomTitle, WCHAR* Cust
         return false;
 }
 
-BOOL CopyFileT(WCHAR* lpExistingFileName, WCHAR* lpNewFileName, BOOL bFailIfExists)
+BOOL CopyFileT(WCHAR *lpExistingFileName, WCHAR *lpNewFileName, BOOL bFailIfExists)
 {
     if (usys())
     {
@@ -218,7 +212,7 @@ BOOL CopyFileT(WCHAR* lpExistingFileName, WCHAR* lpNewFileName, BOOL bFailIfExis
     }
 }
 
-BOOL CreateDirectoryT(WCHAR* lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+BOOL CreateDirectoryT(WCHAR *lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
     if (usys())
     {
@@ -235,7 +229,7 @@ BOOL CreateDirectoryT(WCHAR* lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttribu
     }
 }
 
-BOOL RemoveDirectoryT(WCHAR* lpPathName)
+BOOL RemoveDirectoryT(WCHAR *lpPathName)
 {
     if (usys())
     {
@@ -252,7 +246,7 @@ BOOL RemoveDirectoryT(WCHAR* lpPathName)
     }
 }
 
-BOOL DeleteFileT(WCHAR* lpFileName)
+BOOL DeleteFileT(WCHAR *lpFileName)
 {
     if (usys())
     {
@@ -269,7 +263,7 @@ BOOL DeleteFileT(WCHAR* lpFileName)
     }
 }
 
-BOOL MoveFileT(WCHAR* lpExistingFileName, WCHAR* lpNewFileName)
+BOOL MoveFileT(WCHAR *lpExistingFileName, WCHAR *lpNewFileName)
 {
     if (usys())
     {
@@ -287,7 +281,7 @@ BOOL MoveFileT(WCHAR* lpExistingFileName, WCHAR* lpNewFileName)
     }
 }
 
-BOOL SetFileAttributesT(WCHAR* lpFileName, DWORD dwFileAttributes)
+BOOL SetFileAttributesT(WCHAR *lpFileName, DWORD dwFileAttributes)
 {
     if (usys())
     {
@@ -304,42 +298,28 @@ BOOL SetFileAttributesT(WCHAR* lpFileName, DWORD dwFileAttributes)
     }
 }
 
-HANDLE CreateFileT(WCHAR* lpFileName,
-                   DWORD dwDesiredAccess,
-                   DWORD dwShareMode,
-                   LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-                   DWORD dwCreationDisposition,
-                   DWORD dwFlagsAndAttributes,
+HANDLE CreateFileT(WCHAR *lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+                   LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                    HANDLE hTemplateFile)
 {
     if (usys())
     {
         WCHAR wbuf[wdirtypemax];
         if (MakeExtraLongNameW(wbuf, lpFileName, wdirtypemax - 1))
-            return CreateFileW(wbuf,
-                               dwDesiredAccess,
-                               dwShareMode,
-                               lpSecurityAttributes,
-                               dwCreationDisposition,
-                               dwFlagsAndAttributes,
-                               hTemplateFile);
+            return CreateFileW(wbuf, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition,
+                               dwFlagsAndAttributes, hTemplateFile);
         else
             return INVALID_HANDLE_VALUE;
     }
     else
     {
         char buf[MAX_PATH];
-        return CreateFile(wafilenamecopy(buf, lpFileName),
-                          dwDesiredAccess,
-                          dwShareMode,
-                          lpSecurityAttributes,
-                          dwCreationDisposition,
-                          dwFlagsAndAttributes,
-                          hTemplateFile);
+        return CreateFile(wafilenamecopy(buf, lpFileName), dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+                          dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
     }
 }
 
-UINT ExtractIconExT(WCHAR* lpszFile, int nIconIndex, HICON* phiconLarge, HICON* phiconSmall, UINT nIcons)
+UINT ExtractIconExT(WCHAR *lpszFile, int nIconIndex, HICON *phiconLarge, HICON *phiconSmall, UINT nIcons)
 {
     if (usys())
     { // Unfortunately this function cannot handle names longer than 259 characters
@@ -352,7 +332,7 @@ UINT ExtractIconExT(WCHAR* lpszFile, int nIconIndex, HICON* phiconLarge, HICON* 
     }
 }
 
-HANDLE FindFirstFileT(WCHAR* lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
+HANDLE FindFirstFileT(WCHAR *lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 {
     if (usys())
     {
@@ -369,8 +349,7 @@ HANDLE FindFirstFileT(WCHAR* lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
         HANDLE retval = FindFirstFile(wafilenamecopy(buf, lpFileName), &FindFileDataA);
         if (retval != INVALID_HANDLE_VALUE)
         {
-            awlcopy(lpFindFileData->cAlternateFileName,
-                    FindFileDataA.cAlternateFileName,
+            awlcopy(lpFindFileData->cAlternateFileName, FindFileDataA.cAlternateFileName,
                     countof(lpFindFileData->cAlternateFileName) - 1);
             awlcopy(lpFindFileData->cFileName, FindFileDataA.cFileName, countof(lpFindFileData->cFileName) - 1);
             lpFindFileData->dwFileAttributes = FindFileDataA.dwFileAttributes;
@@ -399,8 +378,7 @@ BOOL FindNextFileT(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
         BOOL retval = FindNextFile(hFindFile, &FindFileDataA);
         if (retval)
         {
-            awlcopy(lpFindFileData->cAlternateFileName,
-                    FindFileDataA.cAlternateFileName,
+            awlcopy(lpFindFileData->cAlternateFileName, FindFileDataA.cAlternateFileName,
                     countof(lpFindFileData->cAlternateFileName) - 1);
             awlcopy(lpFindFileData->cFileName, FindFileDataA.cFileName, countof(lpFindFileData->cFileName) - 1);
             lpFindFileData->dwFileAttributes = FindFileDataA.dwFileAttributes;

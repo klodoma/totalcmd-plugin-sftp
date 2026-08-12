@@ -14,7 +14,7 @@ HWND hWndMain = NULL;
 
 std::vector<pFileInfoExtra> gFileInfoExtras;
 
-#define defininame   "sftpplug.ini"
+#define defininame "sftpplug.ini"
 #define templatefile "sftpplug.tpl"
 char inifilename[MAX_PATH] = defininame;
 char pluginname[] = "SFTP";
@@ -33,7 +33,7 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserve
 {
     if (ul_reason_for_call == DLL_PROCESS_ATTACH)
     {
-        hinst = (HINSTANCE) hModule;
+        hinst = (HINSTANCE)hModule;
         LoadString(hinst, IDS_F7NEW, s_f7newconnection, sizeof(s_f7newconnection) - 1);
         awlcopy(s_f7newconnectionW, s_f7newconnection, countof(s_f7newconnectionW) - 1);
         LoadString(hinst, IDS_QUICKCONNECT, s_quickconnect, sizeof(s_quickconnect) - 1);
@@ -61,11 +61,11 @@ BOOL IsMainThread()
     return GetCurrentThreadId() == mainthreadid;
 }
 
-BOOL MessageLoop(void* serverid)
+BOOL MessageLoop(void *serverid)
 {
     BOOL aborted = false;
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
-    if (ConnectSettings && ProgressProc && abs((int) (GetCurrentTime() - ConnectSettings->lastpercenttime)) > 250)
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
+    if (ConnectSettings && ProgressProc && abs((int)(GetCurrentTime() - ConnectSettings->lastpercenttime)) > 250)
     {
         // important: also call AFTER soft_aborted is true!!!
         aborted = 0 != ProgressProc(PluginNumber, NULL, NULL, ConnectSettings->lastpercent);
@@ -75,27 +75,27 @@ BOOL MessageLoop(void* serverid)
     return aborted;
 }
 
-void ShowStatus(char* status)
+void ShowStatus(char *status)
 {
     if (LogProc)
         LogProc(PluginNumber, MSGTYPE_DETAILS, status);
 }
 
-void ShowStatusW(WCHAR* status)
+void ShowStatusW(WCHAR *status)
 {
     LogProcT(PluginNumber, MSGTYPE_DETAILS, status);
 }
 
-BOOL UpdatePercentBar(void* serverid, int percent)
+BOOL UpdatePercentBar(void *serverid, int percent)
 {
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
     if (ConnectSettings)
         ConnectSettings->lastpercent = percent; // used for MessageLoop below
 
     return MessageLoop(serverid); // This actually sets the percent bar!
 }
 
-SERVERID GetServerIdAndRelativePathFromPath(char* Path, char* RelativePath, int maxlen)
+SERVERID GetServerIdAndRelativePathFromPath(char *Path, char *RelativePath, int maxlen)
 {
     char DisplayName[wdirtypemax];
     GetDisplayNameFromPath(Path, DisplayName, sizeof(DisplayName) - 1);
@@ -103,7 +103,7 @@ SERVERID GetServerIdAndRelativePathFromPath(char* Path, char* RelativePath, int 
     if (serverid)
     {
         RelativePath[0] = 0;
-        char* p = Path;
+        char *p = Path;
         while (p[0] == '\\' || p[0] == '/') // skip initial slash
             p++;
         while (p[0] != 0 && p[0] != '\\' && p[0] != '/') // skip path
@@ -117,7 +117,7 @@ SERVERID GetServerIdAndRelativePathFromPath(char* Path, char* RelativePath, int 
     return serverid;
 }
 
-SERVERID GetServerIdAndRelativePathFromPathW(WCHAR* Path, WCHAR* RelativePath, int maxlen)
+SERVERID GetServerIdAndRelativePathFromPathW(WCHAR *Path, WCHAR *RelativePath, int maxlen)
 {
     char DisplayName[wdirtypemax], PathA[wdirtypemax];
     walcopy(PathA, Path, sizeof(PathA) - 1);
@@ -126,7 +126,7 @@ SERVERID GetServerIdAndRelativePathFromPathW(WCHAR* Path, WCHAR* RelativePath, i
     if (serverid)
     {
         RelativePath[0] = 0;
-        WCHAR* p = Path;
+        WCHAR *p = Path;
         while (p[0] == '\\' || p[0] == '/') // skip initial slash
             p++;
         while (p[0] != 0 && p[0] != '\\' && p[0] != '/') // skip path
@@ -151,7 +151,7 @@ void SetFileInfoExtras(pConnectSettings ConnectSettings, pFileInfoExtra info)
     }
 }
 
-void ResetFileInfoExtras(void* serverid)
+void ResetFileInfoExtras(void *serverid)
 {
     if (serverid == NULL)
     {
@@ -172,7 +172,7 @@ void ResetFileInfoExtras(void* serverid)
         return;
     }
 
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
     if (ConnectSettings)
     {
         pFileInfoExtra pTmp = NULL;
@@ -204,7 +204,7 @@ void ResetFileInfoExtras(void* serverid)
     }
 }
 
-pFileInfoExtra FindFileInfoExtras(WCHAR* RemoteName)
+pFileInfoExtra FindFileInfoExtras(WCHAR *RemoteName)
 {
     if (RemoteName == NULL)
         return NULL;
@@ -258,13 +258,13 @@ void __stdcall FsSetCryptCallback(tCryptProc pCryptProc, int CryptoNr, int Flags
 
 typedef struct
 {
-    void* sftpdataptr;
+    void *sftpdataptr;
     SERVERID serverid;
     SERVERHANDLE rootfindhandle;
     BOOL rootfindfirst;
 } tLastFindStuct, *pLastFindStuct;
 
-BOOL __stdcall FsDisconnect(char* DisconnectRoot)
+BOOL __stdcall FsDisconnect(char *DisconnectRoot)
 {
     char DisplayName[wdirtypemax];
     GetDisplayNameFromPath(DisconnectRoot, DisplayName, sizeof(DisplayName) - 1);
@@ -281,13 +281,13 @@ BOOL __stdcall FsDisconnect(char* DisconnectRoot)
     return TRUE;
 }
 
-HANDLE __stdcall FsFindFirstW(WCHAR* Path, WIN32_FIND_DATAW* FindData)
+HANDLE __stdcall FsFindFirstW(WCHAR *Path, WIN32_FIND_DATAW *FindData)
 {
     WCHAR remotedir[wdirtypemax];
     char DisplayName[wdirtypemax], PathA[wdirtypemax], skippedchar;
     pLastFindStuct lf;
 
-    void* sftpdataptr = NULL;
+    void *sftpdataptr = NULL;
     BOOL wasconnected = true;
 
     if (wcscmp(Path, L"\\") == 0)
@@ -301,8 +301,8 @@ HANDLE __stdcall FsFindFirstW(WCHAR* Path, WIN32_FIND_DATAW* FindData)
         FindData->dwFileAttributes = 0;
         FindData->ftLastWriteTime.dwHighDateTime = 0xFFFFFFFF;
         FindData->ftLastWriteTime.dwLowDateTime = 0xFFFFFFFE;
-        FindData->nFileSizeLow = (DWORD) strlen(s_helptext);
-        lf = (pLastFindStuct) malloc(sizeof(tLastFindStuct));
+        FindData->nFileSizeLow = (DWORD)strlen(s_helptext);
+        lf = (pLastFindStuct)malloc(sizeof(tLastFindStuct));
         memset(lf, 0, sizeof(tLastFindStuct));
         lf->rootfindfirst = true;
         return lf;
@@ -360,12 +360,12 @@ HANDLE __stdcall FsFindFirstW(WCHAR* Path, WIN32_FIND_DATAW* FindData)
             FindData->dwFileAttributes |= 0x80000000;
             FindData->dwReserved0 = LIBSSH2_SFTP_S_IFLNK | 0555; // attributes and format mask
 
-            lf = (pLastFindStuct) malloc(sizeof(tLastFindStuct));
+            lf = (pLastFindStuct)malloc(sizeof(tLastFindStuct));
             memset(lf, 0, sizeof(tLastFindStuct));
             if (ok)
                 lf->sftpdataptr = sftpdataptr;
             lf->serverid = serverid;
-            return (HANDLE) lf;
+            return (HANDLE)lf;
         }
         if (!ok)
         {
@@ -381,11 +381,11 @@ HANDLE __stdcall FsFindFirstW(WCHAR* Path, WIN32_FIND_DATAW* FindData)
 
         if (SFTP_OK == SftpFindNextFileW(serverid, sftpdataptr, FindData, skippedchar))
         {
-            lf = (pLastFindStuct) malloc(sizeof(tLastFindStuct));
+            lf = (pLastFindStuct)malloc(sizeof(tLastFindStuct));
             memset(lf, 0, sizeof(tLastFindStuct));
             lf->sftpdataptr = sftpdataptr;
             lf->serverid = serverid;
-            return (HANDLE) lf;
+            return (HANDLE)lf;
         }
         else
         {
@@ -397,7 +397,7 @@ HANDLE __stdcall FsFindFirstW(WCHAR* Path, WIN32_FIND_DATAW* FindData)
     return INVALID_HANDLE_VALUE;
 }
 
-HANDLE __stdcall FsFindFirst(char* Path, WIN32_FIND_DATA* FindData)
+HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA *FindData)
 {
     WIN32_FIND_DATAW FindDataW;
     WCHAR PathW[wdirtypemax];
@@ -407,15 +407,15 @@ HANDLE __stdcall FsFindFirst(char* Path, WIN32_FIND_DATA* FindData)
     return retval;
 }
 
-BOOL __stdcall FsFindNextW(HANDLE Hdl, WIN32_FIND_DATAW* FindData)
+BOOL __stdcall FsFindNextW(HANDLE Hdl, WIN32_FIND_DATAW *FindData)
 {
     pLastFindStuct lf;
     char name[wdirtypemax];
 
-    if (Hdl == (HANDLE) 1)
+    if (Hdl == (HANDLE)1)
         return false;
 
-    lf = (pLastFindStuct) Hdl;
+    lf = (pLastFindStuct)Hdl;
     if (lf != INVALID_HANDLE_VALUE)
     {
         if (lf->rootfindfirst)
@@ -455,7 +455,7 @@ BOOL __stdcall FsFindNextW(HANDLE Hdl, WIN32_FIND_DATAW* FindData)
     return false;
 }
 
-BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA* FindData)
+BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA *FindData)
 {
     WIN32_FIND_DATAW FindDataW;
     copyfinddataaw(&FindDataW, FindData);
@@ -470,7 +470,7 @@ int __stdcall FsFindClose(HANDLE Hdl)
     if (Hdl == INVALID_HANDLE_VALUE)
         return 0;
     pLastFindStuct lf;
-    lf = (pLastFindStuct) Hdl;
+    lf = (pLastFindStuct)Hdl;
     if (lf->sftpdataptr)
     {
         SftpFindClose(lf->serverid, lf->sftpdataptr);
@@ -480,9 +480,9 @@ int __stdcall FsFindClose(HANDLE Hdl)
     return 0;
 }
 
-BOOL __stdcall FsMkDirW(WCHAR* Path)
+BOOL __stdcall FsMkDirW(WCHAR *Path)
 {
-    WCHAR* p = wcschr(Path + 1, '\\');
+    WCHAR *p = wcschr(Path + 1, '\\');
     if (p)
     {
         WCHAR remotedir[wdirtypemax];
@@ -512,13 +512,13 @@ BOOL __stdcall FsMkDirW(WCHAR* Path)
     }
 }
 
-BOOL __stdcall FsMkDir(char* Path)
+BOOL __stdcall FsMkDir(char *Path)
 {
     WCHAR wbuf[wdirtypemax];
     return FsMkDirW(awfilenamecopy(wbuf, Path));
 }
 
-int __stdcall FsExecuteFileW(HWND MainWin, WCHAR* RemoteName, WCHAR* Verb)
+int __stdcall FsExecuteFileW(HWND MainWin, WCHAR *RemoteName, WCHAR *Verb)
 {
     char remoteserver[wdirtypemax];
     WCHAR remotedir[wdirtypemax];
@@ -531,7 +531,7 @@ int __stdcall FsExecuteFileW(HWND MainWin, WCHAR* RemoteName, WCHAR* Verb)
             if (SftpLinkFolderTargetW(serverid, remotedir, wdirtypemax - 1))
             {
                 // now build the target name: server name followed by new path
-                WCHAR* p;
+                WCHAR *p;
                 p = wcschr(RemoteName + 1, '\\');
                 if (p)
                 {
@@ -548,12 +548,12 @@ int __stdcall FsExecuteFileW(HWND MainWin, WCHAR* RemoteName, WCHAR* Verb)
         {
             if (_wcsicmp(RemoteName + 1, s_f7newconnectionW) != 0)
             {
-                WCHAR* p = RemoteName + wcslen(RemoteName);
+                WCHAR *p = RemoteName + wcslen(RemoteName);
                 walcopy(remoteserver, RemoteName + 1, sizeof(remoteserver) - 1);
                 SERVERID serverid = GetServerIdFromName(remoteserver, GetCurrentThreadId());
                 if (serverid)
                 {
-                    SftpGetLastActivePathW(serverid, p, wdirtypemax - (DWORD) (p - RemoteName) - 1);
+                    SftpGetLastActivePathW(serverid, p, wdirtypemax - (DWORD)(p - RemoteName) - 1);
                 }
                 else
                 {
@@ -566,14 +566,14 @@ int __stdcall FsExecuteFileW(HWND MainWin, WCHAR* RemoteName, WCHAR* Verb)
                         if (serverid)
                         {
                             SetServerIdForName(remoteserver, serverid);
-                            SftpGetLastActivePathW(serverid, p, wdirtypemax - (DWORD) (p - RemoteName) - 1);
+                            SftpGetLastActivePathW(serverid, p, wdirtypemax - (DWORD)(p - RemoteName) - 1);
                         }
                         else
                             return FS_EXEC_ERROR;
                     }
                     else
-                        SftpGetServerBasePathW(
-                            RemoteName + 1, p, wdirtypemax - (DWORD) (p - RemoteName) - 1, inifilename);
+                        SftpGetServerBasePathW(RemoteName + 1, p, wdirtypemax - (DWORD)(p - RemoteName) - 1,
+                                               inifilename);
                 }
                 if (p[0] == 0)
                     wcslcat(RemoteName, L"/", wdirtypemax - 1);
@@ -631,7 +631,7 @@ int __stdcall FsExecuteFileW(HWND MainWin, WCHAR* RemoteName, WCHAR* Verb)
                 wcslcpy(remotedir, Verb + 9, countof(remotedir) - 1);
             ReplaceSlashByBackslashW(remotedir);
 
-            WCHAR* p;
+            WCHAR *p;
             p = wcschr(RemoteName + 1, '\\');
             if (p)
             {
@@ -660,7 +660,7 @@ int __stdcall FsExecuteFileW(HWND MainWin, WCHAR* RemoteName, WCHAR* Verb)
     return FS_EXEC_ERROR;
 }
 
-int __stdcall FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
+int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb)
 {
     WCHAR RemoteNameW[wdirtypemax], VerbW[wdirtypemax];
     int ret = FsExecuteFileW(MainWin, awfilenamecopy(RemoteNameW, RemoteName), awfilenamecopy(VerbW, Verb));
@@ -669,26 +669,22 @@ int __stdcall FsExecuteFile(HWND MainWin, char* RemoteName, char* Verb)
     return ret;
 }
 
-BOOL CopyMoveEncryptedPassword(char* OldName, char* NewName, BOOL Move)
+BOOL CopyMoveEncryptedPassword(char *OldName, char *NewName, BOOL Move)
 {
     if (CryptProc)
-        return CryptProc(PluginNumber,
-                         CryptoNumber,
-                         Move ? FS_CRYPT_MOVE_PASSWORD : FS_CRYPT_COPY_PASSWORD,
-                         OldName,
-                         NewName,
-                         0) == FS_FILE_OK;
+        return CryptProc(PluginNumber, CryptoNumber, Move ? FS_CRYPT_MOVE_PASSWORD : FS_CRYPT_COPY_PASSWORD, OldName,
+                         NewName, 0) == FS_FILE_OK;
     else
         return false;
 }
 
-int __stdcall FsRenMovFileW(WCHAR* OldName, WCHAR* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct* ri)
+int __stdcall FsRenMovFileW(WCHAR *OldName, WCHAR *NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct *ri)
 {
     WCHAR olddir[wdirtypemax], newdir[wdirtypemax];
 
     // Rename or copy a server?
-    WCHAR* p1 = wcschr(OldName + 1, '\\');
-    WCHAR* p2 = wcschr(NewName + 1, '\\');
+    WCHAR *p1 = wcschr(OldName + 1, '\\');
+    WCHAR *p2 = wcschr(NewName + 1, '\\');
     if (p1 == NULL && p2 == NULL)
     {
         char OldNameA[MAX_PATH], NewNameA[MAX_PATH];
@@ -714,7 +710,7 @@ int __stdcall FsRenMovFileW(WCHAR* OldName, WCHAR* NewName, BOOL Move, BOOL Over
     if (serverid1 != serverid2 || serverid1 == NULL)
         return FS_FILE_NOTFOUND;
 
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid1;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid1;
     if (ConnectSettings)
         ConnectSettings->lastpercent = 0;
 
@@ -733,13 +729,13 @@ int __stdcall FsRenMovFileW(WCHAR* OldName, WCHAR* NewName, BOOL Move, BOOL Over
     }
 }
 
-int __stdcall FsRenMovFile(char* OldName, char* NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct* ri)
+int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct *ri)
 {
     WCHAR OldNameW[wdirtypemax], NewNameW[wdirtypemax];
     return FsRenMovFileW(awfilenamecopy(OldNameW, OldName), awfilenamecopy(NewNameW, NewName), Move, OverWrite, ri);
 }
 
-BOOL FileExistsT(WCHAR* LocalName)
+BOOL FileExistsT(WCHAR *LocalName)
 {
     WIN32_FIND_DATAW s;
     HANDLE findhandle;
@@ -753,11 +749,11 @@ BOOL FileExistsT(WCHAR* LocalName)
     }
 }
 
-void RemoveInalidChars(char* p)
+void RemoveInalidChars(char *p)
 {
     while (p[0])
     {
-        if ((unsigned char) (p[0]) < 32)
+        if ((unsigned char)(p[0]) < 32)
             p[0] = ' ';
         else if (p[0] == ':' || p[0] == '|' || p[0] == '*' || p[0] == '?' || p[0] == '\\' || p[0] == '/' || p[0] == '"')
             p[0] = '_';
@@ -765,11 +761,11 @@ void RemoveInalidChars(char* p)
     }
 }
 
-void RemoveInalidCharsW(WCHAR* p)
+void RemoveInalidCharsW(WCHAR *p)
 {
     while (p[0])
     {
-        if ((unsigned int) (p[0]) < 32)
+        if ((unsigned int)(p[0]) < 32)
             p[0] = ' ';
         else if (p[0] == ':' || p[0] == '|' || p[0] == '*' || p[0] == '?' || p[0] == '\\' || p[0] == '/' || p[0] == '"')
             p[0] = '_';
@@ -777,7 +773,7 @@ void RemoveInalidCharsW(WCHAR* p)
     }
 }
 
-int __stdcall FsGetFileW(WCHAR* RemoteName, WCHAR* LocalName, int CopyFlags, RemoteInfoStruct* ri)
+int __stdcall FsGetFileW(WCHAR *RemoteName, WCHAR *LocalName, int CopyFlags, RemoteInfoStruct *ri)
 {
     int err;
     BOOL OverWrite, Resume, Move;
@@ -791,19 +787,15 @@ int __stdcall FsGetFileW(WCHAR* RemoteName, WCHAR* LocalName, int CopyFlags, Rem
 
     if (wcscmp(RemoteName + 1, s_f7newconnectionW) == 0)
     {
-        HANDLE houtfile = CreateFileT(LocalName,
-                                      GENERIC_WRITE,
-                                      FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                      NULL,
+        HANDLE houtfile = CreateFileT(LocalName, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                                       OverWrite ? CREATE_ALWAYS : CREATE_NEW,
-                                      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
-                                      NULL);
+                                      FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
         if (houtfile != INVALID_HANDLE_VALUE)
         {
             DWORD written;
             char s_helptext[256];
             LoadString(hinst, IDS_HELPTEXT, s_helptext, sizeof(s_helptext));
-            BOOL ret = WriteFile(houtfile, s_helptext, (DWORD) strlen(s_helptext), &written, NULL);
+            BOOL ret = WriteFile(houtfile, s_helptext, (DWORD)strlen(s_helptext), &written, NULL);
             CloseHandle(houtfile);
             if (ret)
                 return FS_FILE_OK;
@@ -813,7 +805,7 @@ int __stdcall FsGetFileW(WCHAR* RemoteName, WCHAR* LocalName, int CopyFlags, Rem
         return FS_FILE_WRITEERROR;
     }
 
-    WCHAR* p = wcsrchr(LocalName, '\\');
+    WCHAR *p = wcsrchr(LocalName, '\\');
     if (p)
         RemoveInalidCharsW(p + 1); // Changes the name passed in!
 
@@ -821,7 +813,7 @@ int __stdcall FsGetFileW(WCHAR* RemoteName, WCHAR* LocalName, int CopyFlags, Rem
     SERVERID serverid = GetServerIdAndRelativePathFromPathW(RemoteName, remotedir, countof(remotedir) - 1);
     if (serverid == NULL)
         return FS_FILE_READERROR;
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
     if (ConnectSettings)
         ConnectSettings->lastpercent = 0;
 
@@ -839,7 +831,7 @@ int __stdcall FsGetFileW(WCHAR* RemoteName, WCHAR* LocalName, int CopyFlags, Rem
             // Resume isn't possible because we cannot know
             // which <CR> characters were already in the original
             // file, and which were added during the download
-            pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+            pConnectSettings ConnectSettings = (pConnectSettings)serverid;
             BOOL TextMode = (ConnectSettings->unixlinebreaks == 1) && SftpDetermineTransferModeW(RemoteName);
             if (TextMode)
                 return SFTP_FAILED;
@@ -848,7 +840,7 @@ int __stdcall FsGetFileW(WCHAR* RemoteName, WCHAR* LocalName, int CopyFlags, Rem
         }
     }
 
-    _int64 filesize = (((_int64) ri->SizeHigh) << 32) + ri->SizeLow;
+    _int64 filesize = (((_int64)ri->SizeHigh) << 32) + ri->SizeLow;
 
     while (true)
     { // auto-resume loop
@@ -874,13 +866,13 @@ int __stdcall FsGetFileW(WCHAR* RemoteName, WCHAR* LocalName, int CopyFlags, Rem
     return FS_FILE_OK;
 }
 
-int __stdcall FsGetFile(char* RemoteName, char* LocalName, int CopyFlags, RemoteInfoStruct* ri)
+int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags, RemoteInfoStruct *ri)
 {
     WCHAR RemoteNameW[wdirtypemax], LocalNameW[wdirtypemax];
     return FsGetFileW(awfilenamecopy(RemoteNameW, RemoteName), awfilenamecopy(LocalNameW, LocalName), CopyFlags, ri);
 }
 
-int __stdcall FsPutFileW(WCHAR* LocalName, WCHAR* RemoteName, int CopyFlags)
+int __stdcall FsPutFileW(WCHAR *LocalName, WCHAR *RemoteName, int CopyFlags)
 {
     int err;
     BOOL OverWrite, Resume, Move;
@@ -905,7 +897,7 @@ int __stdcall FsPutFileW(WCHAR* LocalName, WCHAR* RemoteName, int CopyFlags)
     SERVERID serverid = GetServerIdAndRelativePathFromPathW(RemoteName, remotedir, countof(remotedir) - 1);
     if (serverid == NULL)
         return FS_FILE_READERROR;
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
     if (ConnectSettings)
         ConnectSettings->lastpercent = 0;
 
@@ -925,25 +917,25 @@ int __stdcall FsPutFileW(WCHAR* LocalName, WCHAR* RemoteName, int CopyFlags)
     return FS_FILE_NOTFOUND;
 }
 
-int __stdcall FsPutFile(char* LocalName, char* RemoteName, int CopyFlags)
+int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags)
 {
     WCHAR LocalNameW[wdirtypemax], RemoteNameW[wdirtypemax];
     return FsPutFileW(awfilenamecopy(LocalNameW, LocalName), awfilenamecopy(RemoteNameW, RemoteName), CopyFlags);
 }
 
-BOOL __stdcall FsDeleteFileW(WCHAR* RemoteName)
+BOOL __stdcall FsDeleteFileW(WCHAR *RemoteName)
 {
     if (wcslen(RemoteName) < 3)
         return false;
 
-    WCHAR* p = wcschr(RemoteName + 1, '\\');
+    WCHAR *p = wcschr(RemoteName + 1, '\\');
     if (p)
     {
         WCHAR remotedir[wdirtypemax];
         SERVERID serverid = GetServerIdAndRelativePathFromPathW(RemoteName, remotedir, countof(remotedir) - 1);
         if (serverid == NULL)
             return false;
-        pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+        pConnectSettings ConnectSettings = (pConnectSettings)serverid;
         if (ConnectSettings)
             ConnectSettings->lastpercent = 0;
         return SftpDeleteFileW(serverid, remotedir, false) == SFTP_OK;
@@ -967,25 +959,25 @@ BOOL __stdcall FsDeleteFileW(WCHAR* RemoteName)
     return false;
 }
 
-BOOL __stdcall FsDeleteFile(char* RemoteName)
+BOOL __stdcall FsDeleteFile(char *RemoteName)
 {
     WCHAR RemoteNameW[wdirtypemax];
     return FsDeleteFileW(awfilenamecopy(RemoteNameW, RemoteName));
 }
 
-BOOL __stdcall FsRemoveDirW(WCHAR* RemoteName)
+BOOL __stdcall FsRemoveDirW(WCHAR *RemoteName)
 {
     if (wcslen(RemoteName) < 1)
         return false;
 
-    WCHAR* p = wcschr(RemoteName + 1, '\\');
+    WCHAR *p = wcschr(RemoteName + 1, '\\');
     if (p)
     {
         WCHAR remotedir[wdirtypemax];
         SERVERID serverid = GetServerIdAndRelativePathFromPathW(RemoteName, remotedir, countof(remotedir) - 1);
         if (serverid == NULL)
             return FS_FILE_READERROR;
-        pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+        pConnectSettings ConnectSettings = (pConnectSettings)serverid;
         if (ConnectSettings)
             ConnectSettings->lastpercent = 0;
 
@@ -994,45 +986,45 @@ BOOL __stdcall FsRemoveDirW(WCHAR* RemoteName)
     return false;
 }
 
-BOOL __stdcall FsRemoveDir(char* RemoteName)
+BOOL __stdcall FsRemoveDir(char *RemoteName)
 {
     WCHAR RemoteNameW[wdirtypemax];
     return FsRemoveDirW(awfilenamecopy(RemoteNameW, RemoteName));
 }
 
-BOOL __stdcall FsSetAttr(char* RemoteName, int NewAttr)
+BOOL __stdcall FsSetAttr(char *RemoteName, int NewAttr)
 {
     char remotedir[wdirtypemax];
     SERVERID serverid = GetServerIdAndRelativePathFromPath(RemoteName, remotedir, sizeof(remotedir) - 1);
     if (serverid == NULL)
         return FS_FILE_READERROR;
 
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
     if (ConnectSettings)
         ConnectSettings->lastpercent = 0;
     return SftpSetAttr(serverid, remotedir, NewAttr) == SFTP_OK;
 }
 
-BOOL __stdcall FsSetTimeW(WCHAR* RemoteName, FILETIME* CreationTime, FILETIME* LastAccessTime, FILETIME* LastWriteTime)
+BOOL __stdcall FsSetTimeW(WCHAR *RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime)
 {
     WCHAR remotedir[wdirtypemax];
     SERVERID serverid = GetServerIdAndRelativePathFromPathW(RemoteName, remotedir, countof(remotedir) - 1);
     if (serverid == NULL)
         return FS_FILE_READERROR;
 
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
     if (ConnectSettings)
         ConnectSettings->lastpercent = 0;
     return SftpSetDateTimeW(serverid, remotedir, LastWriteTime) == SFTP_OK;
 }
 
-BOOL __stdcall FsSetTime(char* RemoteName, FILETIME* CreationTime, FILETIME* LastAccessTime, FILETIME* LastWriteTime)
+BOOL __stdcall FsSetTime(char *RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime)
 {
     WCHAR RemoteNameW[wdirtypemax];
     return FsSetTimeW(awfilenamecopy(RemoteNameW, RemoteName), CreationTime, LastAccessTime, LastWriteTime);
 }
 
-void __stdcall FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation)
+void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd, int InfoOperation)
 {
     if (strlen(RemoteDir) < 2)
         if (InfoOperation == FS_STATUS_OP_DELETE || InfoOperation == FS_STATUS_OP_RENMOV_MULTI)
@@ -1048,15 +1040,15 @@ void __stdcall FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation
             pProtectedPassword oldpass = NULL;
             GetDisplayNameFromPath(RemoteDir, DisplayName, sizeof(DisplayName) - 1);
             // get password from main thread
-            void* oldserverid = GetServerIdFromName(DisplayName, mainthreadid);
-            pConnectSettings ConnectSettings = (pConnectSettings) oldserverid;
+            void *oldserverid = GetServerIdFromName(DisplayName, mainthreadid);
+            pConnectSettings ConnectSettings = (pConnectSettings)oldserverid;
             if (ConnectSettings)
             {
                 oldpass = &ConnectSettings->protectedpassword;
                 if (ConnectSettings->protectedpassword.length == 0)
                     oldpass = NULL;
             }
-            void* serverid = SftpConnectToServer(DisplayName, inifilename, oldpass);
+            void *serverid = SftpConnectToServer(DisplayName, inifilename, oldpass);
             if (serverid)
                 SetServerIdForName(DisplayName, serverid);
         }
@@ -1067,16 +1059,16 @@ void __stdcall FsStatusInfo(char* RemoteDir, int InfoStartEnd, int InfoOperation
     }
 }
 
-void __stdcall FsGetDefRootName(char* DefRootName, int maxlen)
+void __stdcall FsGetDefRootName(char *DefRootName, int maxlen)
 {
     strlcpy(DefRootName, defrootname, maxlen);
 }
 
 // use default location, but our own ini file name!
-void __stdcall FsSetDefaultParams(FsDefaultParamStruct* dps)
+void __stdcall FsSetDefaultParams(FsDefaultParamStruct *dps)
 {
     strlcpy(inifilename, dps->DefaultIniName, MAX_PATH - 1);
-    char* p = strrchr(inifilename, '\\');
+    char *p = strrchr(inifilename, '\\');
     if (p)
         p[1] = 0;
     else
@@ -1087,7 +1079,7 @@ void __stdcall FsSetDefaultParams(FsDefaultParamStruct* dps)
     char templatename[MAX_PATH];
     if (GetModuleFileName(hinst, templatename, sizeof(templatename) - 1))
     {
-        char* p = strrchr(templatename, '\\');
+        char *p = strrchr(templatename, '\\');
         if (p)
         {
             p[1] = 0;
@@ -1097,11 +1089,11 @@ void __stdcall FsSetDefaultParams(FsDefaultParamStruct* dps)
     }
 }
 
-int __stdcall FsExtractCustomIcon(char* RemoteName, int ExtractFlags, HICON* TheIcon)
+int __stdcall FsExtractCustomIcon(char *RemoteName, int ExtractFlags, HICON *TheIcon)
 {
     if (strlen(RemoteName) > 1)
     {
-        char* p = strchr(RemoteName + 1, '\\');
+        char *p = strchr(RemoteName + 1, '\\');
         if (p == NULL)
         { // a server!
             if (_stricmp(RemoteName + 1, s_f7newconnection) != 0)
@@ -1127,48 +1119,45 @@ int __stdcall FsGetBackgroundFlags(void)
     return BG_DOWNLOAD | BG_UPLOAD | BG_ASK_USER;
 }
 
-int __stdcall FsServerSupportsChecksumsW(WCHAR* RemoteName)
+int __stdcall FsServerSupportsChecksumsW(WCHAR *RemoteName)
 {
     WCHAR remotedir[wdirtypemax];
     SERVERID serverid = GetServerIdAndRelativePathFromPathW(RemoteName, remotedir, countof(remotedir) - 1);
     if (serverid == NULL)
         return 0;
 
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
     if (ConnectSettings)
         ConnectSettings->lastpercent = 0;
     return SftpServerSupportsChecksumsW(serverid, remotedir);
 }
 
-int __stdcall FsServerSupportsChecksums(char* RemoteName)
+int __stdcall FsServerSupportsChecksums(char *RemoteName)
 {
     WCHAR RemoteNameW[wdirtypemax];
     return FsServerSupportsChecksumsW(awfilenamecopy(RemoteNameW, RemoteName));
 }
 
-HANDLE __stdcall FsStartFileChecksumW(int ChecksumType, WCHAR* RemoteName)
+HANDLE __stdcall FsStartFileChecksumW(int ChecksumType, WCHAR *RemoteName)
 {
     WCHAR remotedir[wdirtypemax];
     SERVERID serverid = GetServerIdAndRelativePathFromPathW(RemoteName, remotedir, countof(remotedir) - 1);
     if (serverid == NULL)
         return 0;
 
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
     if (ConnectSettings)
         ConnectSettings->lastpercent = 0;
     return SftpStartFileChecksumW(ChecksumType, serverid, remotedir);
 }
 
-HANDLE __stdcall FsStartFileChecksum(int ChecksumType, char* RemoteName)
+HANDLE __stdcall FsStartFileChecksum(int ChecksumType, char *RemoteName)
 {
     WCHAR RemoteNameW[wdirtypemax];
     return FsStartFileChecksumW(ChecksumType, awfilenamecopy(RemoteNameW, RemoteName));
 }
 
-int __stdcall FsGetFileChecksumResultW(BOOL WantResult,
-                                       HANDLE ChecksumHandle,
-                                       WCHAR* RemoteName,
-                                       char* checksum,
+int __stdcall FsGetFileChecksumResultW(BOOL WantResult, HANDLE ChecksumHandle, WCHAR *RemoteName, char *checksum,
                                        int maxlen)
 {
     WCHAR remotedir[wdirtypemax];
@@ -1176,21 +1165,18 @@ int __stdcall FsGetFileChecksumResultW(BOOL WantResult,
     if (serverid == NULL)
         return 0;
 
-    pConnectSettings ConnectSettings = (pConnectSettings) serverid;
+    pConnectSettings ConnectSettings = (pConnectSettings)serverid;
     if (ConnectSettings)
         ConnectSettings->lastpercent = 0;
     return SftpGetFileChecksumResultW(WantResult, ChecksumHandle, serverid, checksum, maxlen);
 }
 
-int __stdcall FsGetFileChecksumResult(BOOL WantResult,
-                                      HANDLE ChecksumHandle,
-                                      char* RemoteName,
-                                      char* checksum,
+int __stdcall FsGetFileChecksumResult(BOOL WantResult, HANDLE ChecksumHandle, char *RemoteName, char *checksum,
                                       int maxlen)
 {
     WCHAR RemoteNameW[wdirtypemax];
-    return FsGetFileChecksumResultW(
-        WantResult, ChecksumHandle, awfilenamecopy(RemoteNameW, RemoteName), checksum, maxlen);
+    return FsGetFileChecksumResultW(WantResult, ChecksumHandle, awfilenamecopy(RemoteNameW, RemoteName), checksum,
+                                    maxlen);
 }
 
 /**************************************************************************************/
@@ -1202,10 +1188,10 @@ int fieldtypes[fieldcount] = {ft_string, ft_string, ft_string, ft_string};
 int fieldflags[fieldcount] = {0, 0, 0, 0};
 int sortorders[fieldcount] = {1, 1, 1, 1};
 
-char* fieldnames[fieldcount] = {"username", "groupname", "permissions", "link-destination"};
-char* fieldunits_and_multiplechoicestrings[fieldcount] = {"", "", "", ""};
+char *fieldnames[fieldcount] = {"username", "groupname", "permissions", "link-destination"};
+char *fieldunits_and_multiplechoicestrings[fieldcount] = {"", "", "", ""};
 
-int __stdcall FsContentGetSupportedField(int FieldIndex, char* FieldName, char* Units, int maxlen)
+int __stdcall FsContentGetSupportedField(int FieldIndex, char *FieldName, char *Units, int maxlen)
 {
     if (FieldIndex < 0 || FieldIndex >= fieldcount)
         return ft_nomorefields;
@@ -1214,13 +1200,8 @@ int __stdcall FsContentGetSupportedField(int FieldIndex, char* FieldName, char* 
     return fieldtypes[FieldIndex];
 }
 
-int __stdcall FsContentGetValueT(BOOL unicode,
-                                 WCHAR* FileName,
-                                 int FieldIndex,
-                                 int UnitIndex,
-                                 void* FieldValue,
-                                 int maxlen,
-                                 int flags)
+int __stdcall FsContentGetValueT(BOOL unicode, WCHAR *FileName, int FieldIndex, int UnitIndex, void *FieldValue,
+                                 int maxlen, int flags)
 {
     if (wcslen(FileName) <= 3)
         return ft_fileerror;
@@ -1232,16 +1213,16 @@ int __stdcall FsContentGetValueT(BOOL unicode,
         switch (FieldIndex)
         {
         case 0: // user name
-            strlcpy((char*) FieldValue, pInfoS->szUser, maxlen);
+            strlcpy((char *)FieldValue, pInfoS->szUser, maxlen);
             break;
         case 1: // group name
-            strlcpy((char*) FieldValue, pInfoS->szGroup, maxlen);
+            strlcpy((char *)FieldValue, pInfoS->szGroup, maxlen);
             break;
         case 2: // permissions
-            strlcpy((char*) FieldValue, pInfoS->szPermissions, maxlen);
+            strlcpy((char *)FieldValue, pInfoS->szPermissions, maxlen);
             break;
         case 3: // link destination
-            walcopy((char*) FieldValue, pInfoS->wszLinkDestination, maxlen);
+            walcopy((char *)FieldValue, pInfoS->wszLinkDestination, maxlen);
             break;
         default:
             return ft_nosuchfield;
@@ -1253,21 +1234,17 @@ int __stdcall FsContentGetValueT(BOOL unicode,
     return ft_nosuchfield;
 }
 
-int __stdcall FsContentGetValueW(WCHAR* FileName,
-                                 int FieldIndex,
-                                 int UnitIndex,
-                                 void* FieldValue,
-                                 int maxlen,
+int __stdcall FsContentGetValueW(WCHAR *FileName, int FieldIndex, int UnitIndex, void *FieldValue, int maxlen,
                                  int flags)
 {
     return FsContentGetValueT(true, FileName, FieldIndex, UnitIndex, FieldValue, maxlen, flags);
 }
 
-int __stdcall FsContentGetValue(char* FileName, int FieldIndex, int UnitIndex, void* FieldValue, int maxlen, int flags)
+int __stdcall FsContentGetValue(char *FileName, int FieldIndex, int UnitIndex, void *FieldValue, int maxlen, int flags)
 {
     WCHAR FileNameW[wdirtypemax];
-    return FsContentGetValueT(
-        false, awfilenamecopy(FileNameW, FileName), FieldIndex, UnitIndex, FieldValue, maxlen, flags);
+    return FsContentGetValueT(false, awfilenamecopy(FileNameW, FileName), FieldIndex, UnitIndex, FieldValue, maxlen,
+                              flags);
 }
 
 int __stdcall FsContentGetSupportedFieldFlags(int FieldIndex)
@@ -1288,30 +1265,19 @@ int __stdcall FsContentGetDefaultSortOrder(int FieldIndex)
         return sortorders[FieldIndex];
 }
 
-BOOL __stdcall FsContentGetDefaultView(char* ViewContents,
-                                       char* ViewHeaders,
-                                       char* ViewWidths,
-                                       char* ViewOptions,
+BOOL __stdcall FsContentGetDefaultView(char *ViewContents, char *ViewHeaders, char *ViewWidths, char *ViewOptions,
                                        int maxlen)
 {
     return FALSE;
 }
 
-int __stdcall FsContentSetValueW(WCHAR* FileName,
-                                 int FieldIndex,
-                                 int UnitIndex,
-                                 int FieldType,
-                                 void* FieldValue,
+int __stdcall FsContentSetValueW(WCHAR *FileName, int FieldIndex, int UnitIndex, int FieldType, void *FieldValue,
                                  int flags)
 {
     return ft_nosuchfield;
 }
 
-int __stdcall FsContentSetValue(char* FileName,
-                                int FieldIndex,
-                                int UnitIndex,
-                                int FieldType,
-                                void* FieldValue,
+int __stdcall FsContentSetValue(char *FileName, int FieldIndex, int UnitIndex, int FieldType, void *FieldValue,
                                 int flags)
 {
     WCHAR FileNameW[wdirtypemax];
