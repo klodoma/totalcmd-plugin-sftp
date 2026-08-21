@@ -59,16 +59,16 @@ ConversionResult	ConvertUCS4toUTF16 (
 		};
 		ch = *source++;
 		if (ch <= kMaximumUCS2) {
-			*target++ = ch;
+			*target++ = (UTF16)ch;
 		} else if (ch > kMaximumUTF16) {
-			*target++ = kReplacementCharacter;
+			*target++ = (UTF16)kReplacementCharacter;
 		} else {
 			if (target + 1 >= targetEnd) {
 				result = targetExhausted; break;
 			};
 			ch -= halfBase;
-			*target++ = (ch >> halfShift) + kSurrogateHighStart;
-			*target++ = (ch & halfMask) + kSurrogateLowStart;
+			*target++ = (UTF16)((ch >> halfShift) + kSurrogateHighStart);
+			*target++ = (UTF16)((ch & halfMask) + kSurrogateLowStart);
 		};
 	};
 	*sourceStart = source;
@@ -170,12 +170,12 @@ ConversionResult	ConvertUTF16toUTF8 (
 			target -= bytesToWrite; result = targetExhausted; break;
 		};
 		switch (bytesToWrite) {	/* note: code falls through cases! */
-			case 6:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 5:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 4:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 3:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 2:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 1:	*--target =  ch | firstByteMark[bytesToWrite];
+			case 6:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 5:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 4:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 3:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 2:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 1:	*--target = (UTF8)(ch | firstByteMark[bytesToWrite]);
 		};
 		target += bytesToWrite;
 	};
@@ -213,16 +213,16 @@ ConversionResult	ConvertUTF8toUTF16 (
 			result = targetExhausted; break;
 		};
 		if (ch <= kMaximumUCS2) {
-			*target++ = ch;
+			*target++ = (UTF16)ch;
 		} else if (ch > kMaximumUTF16) {
-			*target++ = kReplacementCharacter;
+			*target++ = (UTF16)kReplacementCharacter;
 		} else {
 			if (target + 1 >= targetEnd) {
 				result = targetExhausted; break;
 			};
 			ch -= halfBase;
-			*target++ = (ch >> halfShift) + kSurrogateHighStart;
-			*target++ = (ch & halfMask) + kSurrogateLowStart;
+			*target++ = (UTF16)((ch >> halfShift) + kSurrogateHighStart);
+			*target++ = (UTF16)((ch & halfMask) + kSurrogateLowStart);
 		};
 	};
 	*sourceStart = source;
@@ -268,12 +268,12 @@ ConversionResult	ConvertUCS4toUTF8 (
 			target -= bytesToWrite; result = targetExhausted; break;
 		};
 		switch (bytesToWrite) {	/* note: code falls through cases! */
-			case 6:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 5:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 4:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 3:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 2:	*--target = (ch | byteMark) & byteMask; ch >>= 6;
-			case 1:	*--target =  ch | firstByteMark[bytesToWrite];
+			case 6:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 5:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 4:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 3:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 2:	*--target = (UTF8)((ch | byteMark) & byteMask); ch >>= 6;
+			case 1:	*--target = (UTF8)(ch | firstByteMark[bytesToWrite]);
 		};
 		target += bytesToWrite;
 	};

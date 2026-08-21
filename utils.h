@@ -32,6 +32,3 @@ int EscapeWithDoubleQuotes(char *target, char *src, int maxlen);
 #define countof(array) (sizeof(array) / sizeof(array[0]))
 #endif // countof
 
-#ifndef _itoa_s
-#define _itoa_s(nr, buf, sz, rdx) (_itoa(nr, buf, rdx))
-#endif

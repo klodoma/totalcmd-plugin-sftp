@@ -178,7 +178,7 @@ void ResetFileInfoExtras(void *serverid)
     {
         pFileInfoExtra pTmp = NULL;
 
-        int i = 0;
+        size_t i = 0;
 
         WCHAR wTmp[2048];
 
@@ -217,7 +217,7 @@ pFileInfoExtra FindFileInfoExtras(WCHAR *RemoteName)
 
     pFileInfoExtra pTmp = NULL;
 
-    for (int i = 0; i < gFileInfoExtras.size(); i++)
+    for (size_t i = 0; i < gFileInfoExtras.size(); i++)
     {
         pTmp = gFileInfoExtras[i];
 

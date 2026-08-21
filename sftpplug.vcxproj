@@ -72,23 +72,31 @@
     <_ProjectFileVersion>18.0.11925.146</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\Release\</OutDir>
+    <OutDir>$(ProjectDir)wfx\</OutDir>
     <IntDir>.\Release\</IntDir>
+    <TargetName>sftpplug</TargetName>
+    <TargetExt>.wfx</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)wfx\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>sftpplug</TargetName>
+    <TargetExt>.wfx64</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\Debug\</OutDir>
+    <OutDir>$(ProjectDir)wfx\</OutDir>
     <IntDir>.\Debug\</IntDir>
+    <TargetName>sftpplug</TargetName>
+    <TargetExt>.wfx</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)wfx\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>sftpplug</TargetName>
+    <TargetExt>.wfx64</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -119,8 +127,8 @@
       <Culture>0x0807</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>wfx/sftpplug.wfx</OutputFile>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\sftpplug.def</ModuleDefinitionFile>
       <ProgramDatabaseFile>.\Release/sftpplug.pdb</ProgramDatabaseFile>
@@ -160,8 +168,8 @@
       <Culture>0x0807</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>libcmt.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>wfx/sftpplug.wfx64</OutputFile>
+      <AdditionalDependencies>libcmt.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\sftpplug.def</ModuleDefinitionFile>
       <ProgramDatabaseFile>.\Release/sftpplug.pdb</ProgramDatabaseFile>
@@ -202,8 +210,8 @@
       <Culture>0x0807</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>odbc32.lib;odbccp32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>wfx/sftpplug.wfx</OutputFile>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\sftpplug.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -245,8 +253,8 @@
       <Culture>0x0807</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>libcmtd.lib;odbc32.lib;odbccp32.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>wfx/sftpplug.wfx64</OutputFile>
+      <AdditionalDependencies>libcmtd.lib;odbc32.lib;odbccp32.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\sftpplug.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
