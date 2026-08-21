@@ -1819,7 +1819,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                     }
                 }
                 if (auth != 0)
-                    auth_pw = 1; // all identities failed, allow password fallback
+                    auth_pw &= 3; // all identities failed; allow the other advertised methods
             }
             libssh2_agent_disconnect(agent);
             libssh2_agent_free(agent);
