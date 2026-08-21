@@ -131,7 +131,7 @@ int LoadServersFromIni(char *inifilename, char *quickconnectname)
         PSERVERENTRY newentry = (PSERVERENTRY)malloc(sizeof(SERVERENTRY));
         if (newentry)
         {
-            strcpy(newentry->displayname, quickconnectname);
+            strcpy_s(newentry->displayname, _countof(newentry->displayname), quickconnectname);
             newentry->serverid = NULL;
             newentry->next = server_linked_list;
             newentry->serverupdated = true;
@@ -304,7 +304,7 @@ BOOL SetServerIdForName(char *displayname, SERVERID newid)
             PSERVERENTRY newentry = (PSERVERENTRY)malloc(sizeof(SERVERENTRY));
             if (newentry)
             {
-                strcpy(newentry->displayname, displayname);
+                strcpy_s(newentry->displayname, _countof(newentry->displayname), displayname);
                 newentry->serverid = newid;
                 newentry->serverupdated = true;
                 newentry->threadid = id;

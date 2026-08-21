@@ -13,17 +13,8 @@ char usysychecked = 0;
 
 BOOL usys()
 {
-    if (!usysychecked)
-    {
-        OSVERSIONINFO vx;
-        vx.dwOSVersionInfoSize = sizeof(vx);
-        GetVersionEx(&vx);
-        if (vx.dwPlatformId == VER_PLATFORM_WIN32_NT)
-            usysychecked = 1;
-        else
-            usysychecked = 2;
-    }
-    return (usysychecked == 1);
+    // Every Windows version supported by current toolchains uses the NT API.
+    return TRUE;
 }
 
 char *walcopy(char *outname, WCHAR *inname, int maxlen)
@@ -78,11 +69,11 @@ WCHAR *wcslcpy(WCHAR *str1, const WCHAR *str2, int imaxlen)
 {
     if ((int)wcslen(str2) >= imaxlen - 1)
     {
-        wcsncpy(str1, str2, imaxlen - 1);
+        wcsncpy_s(str1, imaxlen, str2, imaxlen - 1);
         str1[imaxlen - 1] = 0;
     }
     else
-        wcscpy(str1, str2);
+        wcscpy_s(str1, imaxlen, str2);
     return str1;
 }
 
@@ -91,11 +82,11 @@ WCHAR *wcslcat(wchar_t *str1, const WCHAR *str2, int imaxlen)
     int l1 = (int)wcslen(str1);
     if ((int)wcslen(str2) + l1 >= imaxlen - 1)
     {
-        wcsncpy(str1 + l1, str2, imaxlen - 1 - l1);
+        wcsncpy_s(str1 + l1, imaxlen - l1, str2, imaxlen - 1 - l1);
         str1[imaxlen - 1] = 0;
     }
     else
-        wcscat(str1, str2);
+        wcscat_s(str1, imaxlen, str2);
     return str1;
 }
 
