@@ -46,18 +46,37 @@ if (Test-Path $OutputZip) {
 Write-Host ""
 Write-Host "=== Packaging sftpplug.zip ===" -ForegroundColor Cyan
 
+# Strip a leading "v" so pluginst.inf gets a numeric version (e.g. v3.20.2 -> 3.20.2)
+$InfVersion = if ($Version) { $Version -replace '^[vV]', '' } else { "" }
+
 $zip = [System.IO.Compression.ZipFile]::Open($OutputZip, [System.IO.Compression.ZipArchiveMode]::Create)
 try {
 	# Add all static files from artifacts\ preserving relative paths
 	Get-ChildItem -Recurse -File $PackDir | ForEach-Object {
 		$entryName = $_.FullName.Substring($PackDir.Length + 1).Replace("\", "/")
-		[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
-			$zip,
-			$_.FullName,
-			$entryName,
-			[System.IO.Compression.CompressionLevel]::Optimal
-		) | Out-Null
-		Write-Host "  Added    : $entryName"
+
+		if ($InfVersion -and $_.Name -ieq "pluginst.inf") {
+			# Rewrite the version line in-memory instead of touching the working tree
+			$content = [System.IO.File]::ReadAllText($_.FullName)
+			$newContent = [regex]::Replace(
+				$content,
+				'(?m)^\s*version\s*=.*$',
+				"version=$InfVersion"
+			)
+			$entry = $zip.CreateEntry($entryName, [System.IO.Compression.CompressionLevel]::Optimal)
+			$writer = New-Object System.IO.StreamWriter($entry.Open(), [System.Text.Encoding]::UTF8)
+			try { $writer.Write($newContent) } finally { $writer.Dispose() }
+			Write-Host "  Added    : $entryName (version=$InfVersion)"
+		}
+		else {
+			[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+				$zip,
+				$_.FullName,
+				$entryName,
+				[System.IO.Compression.CompressionLevel]::Optimal
+			) | Out-Null
+			Write-Host "  Added    : $entryName"
+		}
 	}
 
 	# Add compiled plugin files

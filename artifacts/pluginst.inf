@@ -1,6 +1,6 @@
 [plugininstall]
-description=Secure FTP plugin (over SSH connection) v3.21 - uses included libssh2.dll for Windows Vista/7/8/8.1/10/11, see readme.txt!
+description=Secure FTP plugin (over SSH connection)
 type=wfx
 file=sftpplug.wfx
 defaultdir=sftpplug
-version=3.21
+version=3.20.2

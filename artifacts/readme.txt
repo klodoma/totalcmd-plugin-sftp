@@ -70,7 +70,9 @@ prefmethod7=Compression, server to client,  e.g. none
 
 Revision log:
 =============
-20260804 Added sshconfig support. 
+20260821 Added: CI/CD pipeline now stamps the version in pluginst.inf from the git release tag at package time
+20260821 Added sshconfig support. 
+20260821 Changed: Upgraded project to Visual Studio 2026 (vcxproj), reformatted the entire codebase (clang-format, Microsoft/Allman style), and modernized C/C++ code (safer string handling, stronger type safety, IPv4 refactor, fixed build warnings)
 20260706 Release, version 3.10
 20260706 Included version information in plugin dlls.
 20260706 Backported fixes to CVE-2026-7598, CVE-2025-15661, CVE-2026-55199 and CVE-2026-55200 to libssh2 1.11.1 (changed to 1.11.1.1)
