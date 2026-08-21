@@ -1819,7 +1819,8 @@ int SftpConnect(pConnectSettings ConnectSettings)
                     }
                 }
                 if (auth != 0)
-                    auth_pw &= 3; // all identities failed; allow the other advertised methods
+                    auth_pw &= 3; // all identities failed; allow the other advertised methods
+
             }
             libssh2_agent_disconnect(agent);
             libssh2_agent_free(agent);
@@ -2727,7 +2728,10 @@ static void LoadSshConfigSettings(const char *HostName, pConnectSettings Connect
                 strlcpy(match.user, val, sizeof(match.user) - 1);
             }
             else if (_stricmp(key, "Port") == 0)
-            {
+                char *end = NULL;
+                long port = strtol(val, &end, 10);
+                if (end != val && *end == 0 && port >= 1 && port <= 65535)
+                    match.port = (int)port
                 match.port = atoi(val);
             }
             else if (_stricmp(key, "IdentityFile") == 0)
