@@ -171,6 +171,7 @@
 #define IDC_PROTOAUTO                   1027
 #define IDC_PROTOV4                     1028
 #define IDC_PROTOV6                     1029
+#define IDC_PROTOSSHCONFIG              1051
 #define IDC_PROP_NAME                   1030
 #define IDC_FILEMOD2                    1030
 #define IDC_KEEP_ALIVE_SECONDS          1030
@@ -255,7 +256,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        112
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1051
+#define _APS_NEXT_CONTROL_VALUE         1052
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
