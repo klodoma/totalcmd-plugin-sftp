@@ -20,7 +20,7 @@
 #define FS_COPYFLAGS_MOVE 4
 #define FS_COPYFLAGS_EXISTS_SAMECASE 8
 #define FS_COPYFLAGS_EXISTS_DIFFERENTCASE 16
- 
+
 // flags for tRequestProc
 #define RT_Other 0
 #define RT_UserName 1
@@ -88,111 +88,102 @@
 #define FS_CRYPT_MOVE_PASSWORD 5       // Move password when renaming a connection
 #define FS_CRYPT_DELETE_PASSWORD 6     // Delete password
 
+#define FS_CRYPTOPT_MASTERPASS_SET 1 // The user already has a master password defined
 
-#define FS_CRYPTOPT_MASTERPASS_SET 1   // The user already has a master password defined
+#define BG_DOWNLOAD 1 // Plugin supports downloads in background
+#define BG_UPLOAD 2   // Plugin supports uploads in background
+#define BG_ASK_USER 4 // Plugin requires separate connection for background transfers -> ask user first
 
-#define BG_DOWNLOAD 1                  // Plugin supports downloads in background
-#define BG_UPLOAD 2                    // Plugin supports uploads in background
-#define BG_ASK_USER 4                  // Plugin requires separate connection for background transfers -> ask user first
+#define FS_CHK_CRC32 1
+#define FS_CHK_MD5 2
+#define FS_CHK_SHA1 4
+#define FS_CHK_SHA256 8
+#define FS_CHK_SHA512 16
+#define FS_CHK_OTHER 512
 
-#define FS_CHK_CRC32    1
-#define FS_CHK_MD5      2
-#define FS_CHK_SHA1     4
-#define FS_CHK_SHA256   8
-#define FS_CHK_SHA512  16
-#define FS_CHK_OTHER  512
+#define FS_CHK_ERR_BUSY -1 // Checksum calculation still active, try again
+#define FS_CHK_ERR_FAIL -2 // Failed to get checksum
 
-#define FS_CHK_ERR_BUSY -1             // Checksum calculation still active, try again
-#define FS_CHK_ERR_FAIL -2             // Failed to get checksum
-
-
-typedef struct {
-    DWORD SizeLow,SizeHigh;
+typedef struct
+{
+    DWORD SizeLow, SizeHigh;
     FILETIME LastWriteTime;
     int Attr;
 } RemoteInfoStruct;
 
-typedef struct {
-	int size;
-	DWORD PluginInterfaceVersionLow;
-	DWORD PluginInterfaceVersionHi;
-	char DefaultIniName[MAX_PATH];
+typedef struct
+{
+    int size;
+    DWORD PluginInterfaceVersionLow;
+    DWORD PluginInterfaceVersionHi;
+    char DefaultIniName[MAX_PATH];
 } FsDefaultParamStruct;
 
 // callback functions
-typedef int (__stdcall *tProgressProc)(int PluginNr,char* SourceName,
-             char* TargetName,int PercentDone);
-typedef int (__stdcall *tProgressProcW)(int PluginNr,WCHAR* SourceName,
-             WCHAR* TargetName,int PercentDone);
-typedef void (__stdcall *tLogProc)(int PluginNr,int MsgType,char* LogString);
-typedef void (__stdcall *tLogProcW)(int PluginNr,int MsgType,WCHAR* LogString);
+typedef int(__stdcall *tProgressProc)(int PluginNr, char *SourceName, char *TargetName, int PercentDone);
+typedef int(__stdcall *tProgressProcW)(int PluginNr, WCHAR *SourceName, WCHAR *TargetName, int PercentDone);
+typedef void(__stdcall *tLogProc)(int PluginNr, int MsgType, char *LogString);
+typedef void(__stdcall *tLogProcW)(int PluginNr, int MsgType, WCHAR *LogString);
 
-typedef BOOL (__stdcall *tRequestProc)(int PluginNr,int RequestType,char* CustomTitle,
-              char* CustomText,char* ReturnedText,int maxlen);
-typedef BOOL (__stdcall *tRequestProcW)(int PluginNr,int RequestType,WCHAR* CustomTitle,
-              WCHAR* CustomText,WCHAR* ReturnedText,int maxlen);
-typedef int (__stdcall *tCryptProc)(int PluginNr,int CryptoNr,int Mode,
-			  char* ConnectionName,char* Password,int maxlen);
-typedef int (__stdcall *tCryptProcW)(int PluginNr,int CryptoNr,int Mode,
-			  WCHAR* ConnectionName,WCHAR* Password,int maxlen);
+typedef BOOL(__stdcall *tRequestProc)(int PluginNr, int RequestType, char *CustomTitle, char *CustomText,
+                                      char *ReturnedText, int maxlen);
+typedef BOOL(__stdcall *tRequestProcW)(int PluginNr, int RequestType, WCHAR *CustomTitle, WCHAR *CustomText,
+                                       WCHAR *ReturnedText, int maxlen);
+typedef int(__stdcall *tCryptProc)(int PluginNr, int CryptoNr, int Mode, char *ConnectionName, char *Password,
+                                   int maxlen);
+typedef int(__stdcall *tCryptProcW)(int PluginNr, int CryptoNr, int Mode, WCHAR *ConnectionName, WCHAR *Password,
+                                    int maxlen);
 
 // Function prototypes
-int __stdcall FsInit(int PluginNr,tProgressProc pProgressProc,
-                     tLogProc pLogProc,tRequestProc pRequestProc);
-int __stdcall FsInitW(int PluginNr,tProgressProcW pProgressProcW,
-                     tLogProcW pLogProcW,tRequestProcW pRequestProcW);
-void __stdcall FsSetCryptCallback(tCryptProc pCryptProc,int CryptoNr,int Flags);
-void __stdcall FsSetCryptCallbackW(tCryptProcW pCryptProcW,int CryptoNr,int Flags);
-HANDLE __stdcall FsFindFirst(char* Path,WIN32_FIND_DATA *FindData);
-HANDLE __stdcall FsFindFirstW(WCHAR* Path,WIN32_FIND_DATAW *FindData);
+int __stdcall FsInit(int PluginNr, tProgressProc pProgressProc, tLogProc pLogProc, tRequestProc pRequestProc);
+int __stdcall FsInitW(int PluginNr, tProgressProcW pProgressProcW, tLogProcW pLogProcW, tRequestProcW pRequestProcW);
+void __stdcall FsSetCryptCallback(tCryptProc pCryptProc, int CryptoNr, int Flags);
+void __stdcall FsSetCryptCallbackW(tCryptProcW pCryptProcW, int CryptoNr, int Flags);
+HANDLE __stdcall FsFindFirst(char *Path, WIN32_FIND_DATA *FindData);
+HANDLE __stdcall FsFindFirstW(WCHAR *Path, WIN32_FIND_DATAW *FindData);
 
-BOOL __stdcall FsFindNext(HANDLE Hdl,WIN32_FIND_DATA *FindData);
-BOOL __stdcall FsFindNextW(HANDLE Hdl,WIN32_FIND_DATAW *FindData);
+BOOL __stdcall FsFindNext(HANDLE Hdl, WIN32_FIND_DATA *FindData);
+BOOL __stdcall FsFindNextW(HANDLE Hdl, WIN32_FIND_DATAW *FindData);
 int __stdcall FsFindClose(HANDLE Hdl);
-BOOL __stdcall FsMkDir(char* Path);
-BOOL __stdcall FsMkDirW(WCHAR* Path);
-int __stdcall FsExecuteFile(HWND MainWin,char* RemoteName,char* Verb);
-int __stdcall FsExecuteFileW(HWND MainWin,WCHAR* RemoteName,WCHAR* Verb);
-int __stdcall FsRenMovFile(char* OldName,char* NewName,BOOL Move,
-                           BOOL OverWrite,RemoteInfoStruct* ri);
-int __stdcall FsRenMovFileW(WCHAR* OldName,WCHAR* NewName,BOOL Move,
-                           BOOL OverWrite,RemoteInfoStruct* ri);
-int __stdcall FsGetFile(char* RemoteName,char* LocalName,int CopyFlags,
-                        RemoteInfoStruct* ri);
+BOOL __stdcall FsMkDir(char *Path);
+BOOL __stdcall FsMkDirW(WCHAR *Path);
+int __stdcall FsExecuteFile(HWND MainWin, char *RemoteName, char *Verb);
+int __stdcall FsExecuteFileW(HWND MainWin, WCHAR *RemoteName, WCHAR *Verb);
+int __stdcall FsRenMovFile(char *OldName, char *NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct *ri);
+int __stdcall FsRenMovFileW(WCHAR *OldName, WCHAR *NewName, BOOL Move, BOOL OverWrite, RemoteInfoStruct *ri);
+int __stdcall FsGetFile(char *RemoteName, char *LocalName, int CopyFlags, RemoteInfoStruct *ri);
 
-int __stdcall FsGetFileW(WCHAR* RemoteName,WCHAR* LocalName,int CopyFlags,
-                        RemoteInfoStruct* ri);
-int __stdcall FsPutFile(char* LocalName,char* RemoteName,int CopyFlags);
-int __stdcall FsPutFileW(WCHAR* LocalName,WCHAR* RemoteName,int CopyFlags);
-BOOL __stdcall FsDeleteFile(char* RemoteName);
-BOOL __stdcall FsDeleteFileW(WCHAR* RemoteName);
-BOOL __stdcall FsRemoveDir(char* RemoteName);
-BOOL __stdcall FsRemoveDirW(WCHAR* RemoteName);
-BOOL __stdcall FsDisconnect(char* DisconnectRoot);
-BOOL __stdcall FsDisconnectW(WCHAR* DisconnectRoot);
-BOOL __stdcall FsSetAttr(char* RemoteName,int NewAttr);
-BOOL __stdcall FsSetAttrW(WCHAR* RemoteName,int NewAttr);
-BOOL __stdcall FsSetTime(char* RemoteName,FILETIME *CreationTime,
+int __stdcall FsGetFileW(WCHAR *RemoteName, WCHAR *LocalName, int CopyFlags, RemoteInfoStruct *ri);
+int __stdcall FsPutFile(char *LocalName, char *RemoteName, int CopyFlags);
+int __stdcall FsPutFileW(WCHAR *LocalName, WCHAR *RemoteName, int CopyFlags);
+BOOL __stdcall FsDeleteFile(char *RemoteName);
+BOOL __stdcall FsDeleteFileW(WCHAR *RemoteName);
+BOOL __stdcall FsRemoveDir(char *RemoteName);
+BOOL __stdcall FsRemoveDirW(WCHAR *RemoteName);
+BOOL __stdcall FsDisconnect(char *DisconnectRoot);
+BOOL __stdcall FsDisconnectW(WCHAR *DisconnectRoot);
+BOOL __stdcall FsSetAttr(char *RemoteName, int NewAttr);
+BOOL __stdcall FsSetAttrW(WCHAR *RemoteName, int NewAttr);
+BOOL __stdcall FsSetTime(char *RemoteName, FILETIME *CreationTime,
 
-      FILETIME *LastAccessTime,FILETIME *LastWriteTime);
-BOOL __stdcall FsSetTimeW(WCHAR* RemoteName,FILETIME *CreationTime,
-      FILETIME *LastAccessTime,FILETIME *LastWriteTime);
-void __stdcall FsStatusInfo(char* RemoteDir,int InfoStartEnd,int InfoOperation);
-void __stdcall FsStatusInfoW(WCHAR* RemoteDir,int InfoStartEnd,int InfoOperation);
-void __stdcall FsGetDefRootName(char* DefRootName,int maxlen);
-int __stdcall FsExtractCustomIcon(char* RemoteName,int ExtractFlags,HICON* TheIcon);
-int __stdcall FsExtractCustomIconW(WCHAR* RemoteName,int ExtractFlags,HICON* TheIcon);
-void __stdcall FsSetDefaultParams(FsDefaultParamStruct* dps);
+                         FILETIME *LastAccessTime, FILETIME *LastWriteTime);
+BOOL __stdcall FsSetTimeW(WCHAR *RemoteName, FILETIME *CreationTime, FILETIME *LastAccessTime, FILETIME *LastWriteTime);
+void __stdcall FsStatusInfo(char *RemoteDir, int InfoStartEnd, int InfoOperation);
+void __stdcall FsStatusInfoW(WCHAR *RemoteDir, int InfoStartEnd, int InfoOperation);
+void __stdcall FsGetDefRootName(char *DefRootName, int maxlen);
+int __stdcall FsExtractCustomIcon(char *RemoteName, int ExtractFlags, HICON *TheIcon);
+int __stdcall FsExtractCustomIconW(WCHAR *RemoteName, int ExtractFlags, HICON *TheIcon);
+void __stdcall FsSetDefaultParams(FsDefaultParamStruct *dps);
 
-int __stdcall FsGetPreviewBitmap(char* RemoteName,int width,int height,HBITMAP* ReturnedBitmap);
-int __stdcall FsGetPreviewBitmapW(WCHAR* RemoteName,int width,int height,HBITMAP* ReturnedBitmap);
+int __stdcall FsGetPreviewBitmap(char *RemoteName, int width, int height, HBITMAP *ReturnedBitmap);
+int __stdcall FsGetPreviewBitmapW(WCHAR *RemoteName, int width, int height, HBITMAP *ReturnedBitmap);
 BOOL __stdcall FsLinksToLocalFiles(void);
-BOOL __stdcall FsGetLocalName(char* RemoteName,int maxlen);
-BOOL __stdcall FsGetLocalNameW(WCHAR* RemoteName,int maxlen);
+BOOL __stdcall FsGetLocalName(char *RemoteName, int maxlen);
+BOOL __stdcall FsGetLocalNameW(WCHAR *RemoteName, int maxlen);
 
 // ************************** content plugin extension ****************************
 
-// 
+//
 #define ft_nomorefields 0
 
 #define ft_numeric_32 1
@@ -205,18 +196,18 @@ BOOL __stdcall FsGetLocalNameW(WCHAR* RemoteName,int maxlen);
 #define ft_string 8
 #define ft_fulltext 9
 #define ft_datetime 10
-#define ft_stringw 11       // Should only be returned by Unicode function
+#define ft_stringw 11 // Should only be returned by Unicode function
 
 // for FsContentGetValue
-#define ft_nosuchfield -1   // error, invalid field number given
-#define ft_fileerror -2     // file i/o error
-#define ft_fieldempty -3    // field valid, but empty
+#define ft_nosuchfield -1 // error, invalid field number given
+#define ft_fileerror -2   // file i/o error
+#define ft_fieldempty -3  // field valid, but empty
 
-#define ft_ondemand -4      // field will be retrieved only when user presses <SPACEBAR>
-#define ft_delayed 0        // field takes a long time to extract -> try again in background
+#define ft_ondemand -4 // field will be retrieved only when user presses <SPACEBAR>
+#define ft_delayed 0   // field takes a long time to extract -> try again in background
 
 // for FsContentSetValue
-#define ft_setsuccess 0     // setting of the attribute succeeded
+#define ft_setsuccess 0 // setting of the attribute succeeded
 
 // for FsContentGetSupportedFieldFlags
 #define contflags_edit 1
@@ -230,14 +221,14 @@ BOOL __stdcall FsGetLocalNameW(WCHAR* RemoteName,int maxlen);
 #define contflags_substmask 14
 
 // for FsContentSetValue
-#define setflags_first_attribute 1     // First attribute of this file
-#define setflags_last_attribute  2     // Last attribute of this file
-#define setflags_only_date       4     // Only set the date of the datetime value!
+#define setflags_first_attribute 1 // First attribute of this file
+#define setflags_last_attribute 2  // Last attribute of this file
+#define setflags_only_date 4       // Only set the date of the datetime value!
 
+#define CONTENT_DELAYIFSLOW 1 // ContentGetValue called in foreground
 
-#define CONTENT_DELAYIFSLOW 1  // ContentGetValue called in foreground
-
-typedef struct {
+typedef struct
+{
     int size;
     DWORD PluginInterfaceVersionLow;
     DWORD PluginInterfaceVersionHi;
@@ -245,33 +236,38 @@ typedef struct {
     char DefaultIniName[MAX_PATH];
 } ContentDefaultParamStruct;
 
-typedef struct {
-	WORD wYear;
-	WORD wMonth;
-	WORD wDay;
-} tdateformat,*pdateformat;
+typedef struct
+{
+    WORD wYear;
+    WORD wMonth;
+    WORD wDay;
+} tdateformat, *pdateformat;
 
-typedef struct {
-	WORD wHour;
-	WORD wMinute;
-	WORD wSecond;
-} ttimeformat,*ptimeformat;
+typedef struct
+{
+    WORD wHour;
+    WORD wMinute;
+    WORD wSecond;
+} ttimeformat, *ptimeformat;
 
-int __stdcall FsContentGetSupportedField(int FieldIndex,char* FieldName,char* Units,int maxlen);
-int __stdcall FsContentGetValue(char* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags);
-int __stdcall FsContentGetValueW(WCHAR* FileName,int FieldIndex,int UnitIndex,void* FieldValue,int maxlen,int flags);
+int __stdcall FsContentGetSupportedField(int FieldIndex, char *FieldName, char *Units, int maxlen);
+int __stdcall FsContentGetValue(char *FileName, int FieldIndex, int UnitIndex, void *FieldValue, int maxlen, int flags);
+int __stdcall FsContentGetValueW(WCHAR *FileName, int FieldIndex, int UnitIndex, void *FieldValue, int maxlen,
+                                 int flags);
 
-
-void __stdcall FsContentStopGetValue(char* FileName);
-void __stdcall FsContentStopGetValueW(WCHAR* FileName);
+void __stdcall FsContentStopGetValue(char *FileName);
+void __stdcall FsContentStopGetValueW(WCHAR *FileName);
 int __stdcall FsContentGetDefaultSortOrder(int FieldIndex);
 void __stdcall FsContentPluginUnloading(void);
 int __stdcall FsContentGetSupportedFieldFlags(int FieldIndex);
-int __stdcall FsContentSetValue(char* FileName,int FieldIndex,int UnitIndex,int FieldType,void* FieldValue,int flags);
-int __stdcall FsContentSetValueW(WCHAR* FileName,int FieldIndex,int UnitIndex,int FieldType,void* FieldValue,int flags);
+int __stdcall FsContentSetValue(char *FileName, int FieldIndex, int UnitIndex, int FieldType, void *FieldValue,
+                                int flags);
+int __stdcall FsContentSetValueW(WCHAR *FileName, int FieldIndex, int UnitIndex, int FieldType, void *FieldValue,
+                                 int flags);
 
-BOOL __stdcall FsContentGetDefaultView(char* ViewContents,char* ViewHeaders,char* ViewWidths,char* ViewOptions,int maxlen);
-BOOL __stdcall FsContentGetDefaultViewW(WCHAR* ViewContents,WCHAR* ViewHeaders,WCHAR* ViewWidths,WCHAR* ViewOptions,int maxlen);
+BOOL __stdcall FsContentGetDefaultView(char *ViewContents, char *ViewHeaders, char *ViewWidths, char *ViewOptions,
+                                       int maxlen);
+BOOL __stdcall FsContentGetDefaultViewW(WCHAR *ViewContents, WCHAR *ViewHeaders, WCHAR *ViewWidths, WCHAR *ViewOptions,
+                                        int maxlen);
 
 int __stdcall FsGetBackgroundFlags(void);
-
