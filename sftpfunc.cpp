@@ -943,15 +943,9 @@ int SftpConnect(pConnectSettings ConnectSettings)
     }
 
     char detailBuf[512];
-#ifdef sprintf_s
-    sprintf_s(detailBuf, sizeof(detailBuf), "Attempting connection - PubKey: %s, PrivKey: %s, UseAgent: %d",
-              ConnectSettings->pubkeyfile[0] ? ConnectSettings->pubkeyfile : "none",
-              ConnectSettings->privkeyfile[0] ? ConnectSettings->privkeyfile : "none", ConnectSettings->useagent);
-#else
-    sprintf(detailBuf, "Attempting connection - PubKey: %s, PrivKey: %s, UseAgent: %d",
-            ConnectSettings->pubkeyfile[0] ? ConnectSettings->pubkeyfile : "none",
-            ConnectSettings->privkeyfile[0] ? ConnectSettings->privkeyfile : "none", ConnectSettings->useagent);
-#endif
+    snprintf(detailBuf, sizeof(detailBuf), "Attempting connection - PubKey: %s, PrivKey: %s, UseAgent: %d",
+             ConnectSettings->pubkeyfile[0] ? ConnectSettings->pubkeyfile : "none",
+             ConnectSettings->privkeyfile[0] ? ConnectSettings->privkeyfile : "none", ConnectSettings->useagent);
     LogConnectionAttempt(ConnectSettings->DisplayName, ConnectSettings->server, ConnectSettings->customport,
                          ConnectSettings->user, ConnectSettings->proxytype, "ATTEMPTING", detailBuf);
 
@@ -959,11 +953,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
     {
         char buf[128], buf1[128];
         LoadStr(buf1, IDS_SSH2_TOO_OLD);
-#ifdef sprintf_s
-        sprintf_s(buf, 128, buf1, LIBSSH2_VERSION);
-#else
-        sprintf(buf, buf1, LIBSSH2_VERSION);
-#endif
+        snprintf(buf, sizeof(buf), buf1, LIBSSH2_VERSION);
         MessageBox(GetActiveWindow(), buf, "Error", MB_ICONSTOP);
         return SFTP_FAILED;
     }
