@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["**"]   # release workflow handles tags
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build Release|Win32
+        run: msbuild sftpplug.sln /p:Configuration=Release /p:Platform=Win32 /m /nologo /v:minimal
+
+      - name: Build Release|x64
+        run: msbuild sftpplug.sln /p:Configuration=Release /p:Platform=x64 /m /nologo /v:minimal
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sftpplug-binaries
+          path: |
+            wfx/sftpplug.wfx
+            wfx/sftpplug.wfx64
+          if-no-files-found: error
