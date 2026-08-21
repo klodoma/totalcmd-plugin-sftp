@@ -2617,11 +2617,7 @@ static void ApplySshConfigMatch(const SshConfigMatch &match, const char *request
         if (ConnectResults->pubkeyfile[0] == 0)
         {
             char pubKeyFile[MAX_PATH];
-#ifdef sprintf_s
-            sprintf_s(pubKeyFile, sizeof(pubKeyFile), "%s.pub", match.identityFile);
-#else
-            sprintf(pubKeyFile, "%s.pub", match.identityFile);
-#endif
+            snprintf(pubKeyFile, sizeof(pubKeyFile), "%s.pub", match.identityFile);
             if (GetFileAttributesA(pubKeyFile) != INVALID_FILE_ATTRIBUTES)
                 strlcpy(ConnectResults->pubkeyfile, pubKeyFile, sizeof(ConnectResults->pubkeyfile) - 1);
             else
