@@ -110,8 +110,9 @@ static unsigned long ParseNumericIPv4(const char *address)
 {
     sockaddr_in socketAddress = {};
     int socketAddressLength = sizeof(socketAddress);
-    WCHAR addressBuffer[MAX_PATH];
-    MultiByteToWideChar(CP_ACP, 0, address, -1, addressBuffer, _countof(addressBuffer));
+    WCHAR addressBuffer[MAX_PATH] = L"";
+    if (MultiByteToWideChar(CP_ACP, 0, address, -1, addressBuffer, _countof(addressBuffer)) == 0)
+        return INADDR_NONE;
     if (WSAStringToAddressW(addressBuffer, AF_INET, NULL, reinterpret_cast<sockaddr *>(&socketAddress),
                             &socketAddressLength) == 0)
         return socketAddress.sin_addr.s_addr;
@@ -6204,7 +6205,8 @@ LIBSSH2_CHANNEL *ConnectChannel(LIBSSH2_SESSION *session)
             strlcat(errmsg, ": Channel failure", sizeof(errmsg) - 1);
             break;
         default:
-            _itoa_s(err, numbuf, sizeof(numbuf), 10);
+            _itoa_s(err, numbuf, sizeof(numbuf), 10);
+
             strlcat(errmsg, ": Error code ", sizeof(errmsg) - 1);
             strlcat(errmsg, numbuf, sizeof(errmsg) - 1);
             break;
