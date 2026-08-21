@@ -6204,7 +6204,7 @@ LIBSSH2_CHANNEL *ConnectChannel(LIBSSH2_SESSION *session)
             strlcat(errmsg, ": Channel failure", sizeof(errmsg) - 1);
             break;
         default:
-            _itoa_s(err, numbuf, 10);
+            _itoa_s(err, numbuf, sizeof(numbuf), 10);
             strlcat(errmsg, ": Error code ", sizeof(errmsg) - 1);
             strlcat(errmsg, numbuf, sizeof(errmsg) - 1);
             break;
