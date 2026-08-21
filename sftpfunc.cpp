@@ -708,11 +708,10 @@ void LogConnectionAttempt(const char *displayName, const char *server, unsigned 
     sprintf(timestamp, "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 #endif
 
-    HANDLE hFile = CreateFile(logPath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
+    HANDLE hFile = CreateFile(logPath, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
                               FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE)
     {
-        SetFilePointer(hFile, 0, NULL, FILE_END);
 
         char logEntry[2048];
         char proxyText[128] = "";
@@ -2718,10 +2717,14 @@ static void LoadSshConfigSettings(const char *HostName, pConnectSettings Connect
                 strlcpy(match.user, val, sizeof(match.user) - 1);
             }
             else if (_stricmp(key, "Port") == 0)
-                char *end = NULL;
-                long port = strtol(val, &end, 10);
-                if (end != val && *end == 0 && port >= 1 && port <= 65535)
-                    match.port = (int)port
+                char *end = NULL;
+
+                long port = strtol(val, &end, 10);
+
+                if (end != val && *end == 0 && port >= 1 && port <= 65535)
+
+                    match.port = (int)port
+
                 match.port = atoi(val);
             }
             else if (_stricmp(key, "IdentityFile") == 0)
