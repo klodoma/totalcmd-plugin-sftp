@@ -946,6 +946,13 @@ int SftpConnect(pConnectSettings ConnectSettings)
         {
             LoadSshConfigSettings(sshConfigName, ConnectSettings);
         }
+        unsigned short resolvedPort = ConnectSettings->customport ? ConnectSettings->customport : 22;
+        if (!ParseAddress(ConnectSettings->server, &ConnectSettings->server[0], &ConnectSettings->customport,
+                          resolvedPort))
+        {
+            MessageBox(GetActiveWindow(), "Invalid server address.", "SFTP Error", MB_ICONSTOP);
+            return SFTP_FAILED;
+        }
     }
 
     char detailBuf[512];
@@ -2694,6 +2701,8 @@ BOOL LoadServerSettings(char *DisplayName, pConnectSettings ConnectResults)
     GetPrivateProfileString(DisplayName, "server", "", ConnectResults->server, sizeof(ConnectResults->server) - 1,
                             gIniFileName);
     ConnectResults->protocoltype = GetPrivateProfileInt(DisplayName, "protocol", 0, gIniFileName);
+    if (ConnectResults->protocoltype == 3 && ConnectResults->server[0] == 0)
+        strlcpy(ConnectResults->server, DisplayName, sizeof(ConnectResults->server) - 1);
     GetPrivateProfileString(DisplayName, "user", "", ConnectResults->user, sizeof(ConnectResults->user) - 1,
                             gIniFileName);
     GetPrivateProfileString(DisplayName, "fingerprint", "", ConnectResults->savedfingerprint,
@@ -3660,7 +3669,8 @@ void *SftpConnectToServer(char *DisplayName, char *inifilename, pProtectedPasswo
         }
         // look for address and port
         p = strchr(ConnectSettings.server, ':');
-        if (!ParseAddress(ConnectSettings.server, &ConnectSettings.server[0], &ConnectSettings.customport, 22))
+        if (ConnectSettings.protocoltype != 3 &&
+            !ParseAddress(ConnectSettings.server, &ConnectSettings.server[0], &ConnectSettings.customport, 22))
         {
             MessageBox(GetActiveWindow(), "Invalid server address.", "SFTP Error", MB_ICONSTOP);
             return NULL;
