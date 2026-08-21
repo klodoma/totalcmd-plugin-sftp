@@ -63,7 +63,7 @@ typedef struct
     LIBSSH2_SFTP *sftpsession;
 
     BOOL useagent;
-    int protocoltype; // 0 = auto, 1 = IPv4, 2 = IPv6
+    int protocoltype; // 0 = auto, 1 = IPv4, 2 = IPv6, 3 = SSH config
     int servernamelen;
     unsigned short customport;
     int filemod;

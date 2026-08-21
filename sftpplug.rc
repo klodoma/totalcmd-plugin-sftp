@@ -32,15 +32,14 @@ EXSTYLE WS_EX_NOPARENTNOTIFY
 CAPTION "Verbinden mit SFTP-Server"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    LTEXT           "&Verbinden mit (Server/Pfad oder Server:Port/Pfad)",
-                    IDC_STATIC,5,5,166,8
+    LTEXT           "&Verbinden mit (Server[:Port][/Pfad]|SSHConf)",
+                    IDC_STATIC,5,5,150,8
     EDITTEXT        IDC_CONNECTTO,5,15,266,12,ES_AUTOHSCROLL
     CONTROL         "Auto",IDC_PROTOAUTO,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP | WS_TABSTOP,176,5,27,10
-    CONTROL         "IPv4",IDC_PROTOV4,"Button",BS_AUTORADIOBUTTON,208,5,31,
-                    10
-    CONTROL         "IPv6",IDC_PROTOV6,"Button",BS_AUTORADIOBUTTON,240,5,31,
-                    10
+                    WS_GROUP | WS_TABSTOP,150,5,27,10
+    CONTROL         "SSHConf",IDC_PROTOSSHCONFIG,"Button",BS_AUTORADIOBUTTON,177,5,40,10
+    CONTROL         "IPv4",IDC_PROTOV4,"Button",BS_AUTORADIOBUTTON,217,5,25,10
+    CONTROL         "IPv6",IDC_PROTOV6,"Button",BS_AUTORADIOBUTTON,245,5,25,10
     LTEXT           "&Benutzername:",IDC_STATIC,5,31,266,8
     EDITTEXT        IDC_USERNAME,5,42,266,12,ES_AUTOHSCROLL
     LTEXT           "&Kennwort:",IDC_STATIC,5,58,69,8
@@ -457,14 +456,13 @@ EXSTYLE WS_EX_NOPARENTNOTIFY
 CAPTION "Connect to SFTP Server"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    LTEXT           "&Connect to: (server/path or server:port/path)",
-                    IDC_STATIC,5,5,166,8
+    LTEXT           "&Connect to: (server[:port][/path]|SSHConf)",
+                    IDC_STATIC,5,5,150,8
     CONTROL         "Auto",IDC_PROTOAUTO,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP | WS_TABSTOP,176,5,27,10
-    CONTROL         "IPv4",IDC_PROTOV4,"Button",BS_AUTORADIOBUTTON,208,5,31,
-                    10
-    CONTROL         "IPv6",IDC_PROTOV6,"Button",BS_AUTORADIOBUTTON,240,5,31,
-                    10
+                    WS_GROUP | WS_TABSTOP,150,5,27,10
+    CONTROL         "SSHConf",IDC_PROTOSSHCONFIG,"Button",BS_AUTORADIOBUTTON,177,5,40,10
+    CONTROL         "IPv4",IDC_PROTOV4,"Button",BS_AUTORADIOBUTTON,217,5,25,10
+    CONTROL         "IPv6",IDC_PROTOV6,"Button",BS_AUTORADIOBUTTON,245,5,25,10
     EDITTEXT        IDC_CONNECTTO,5,15,266,12,ES_AUTOHSCROLL
     LTEXT           "&User name:",IDC_STATIC,5,31,266,8
     EDITTEXT        IDC_USERNAME,5,42,266,12,ES_AUTOHSCROLL
@@ -886,10 +884,11 @@ BEGIN
     LTEXT           "&Connecter à : (serveur/chemin ou serveur:port/chemin)",
                     IDC_STATIC,3,3,179,8
     EDITTEXT        1000,5,17,266,12,ES_AUTOHSCROLL
-    CONTROL         "Auto",1027,"Button",BS_AUTORADIOBUTTON | WS_GROUP | 
-                    WS_TABSTOP,183,2,27,10
-    CONTROL         "IPv4",1028,"Button",BS_AUTORADIOBUTTON,212,2,29,10
-    CONTROL         "IPv6",1029,"Button",BS_AUTORADIOBUTTON,244,2,31,10
+    CONTROL         "Auto",IDC_PROTOAUTO,"Button",BS_AUTORADIOBUTTON | WS_GROUP | 
+                    WS_TABSTOP,150,2,27,10
+    CONTROL         "SSHConf",IDC_PROTOSSHCONFIG,"Button",BS_AUTORADIOBUTTON,177,2,40,10
+    CONTROL         "IPv4",IDC_PROTOV4,"Button",BS_AUTORADIOBUTTON,217,2,25,10
+    CONTROL         "IPv6",IDC_PROTOV6,"Button",BS_AUTORADIOBUTTON,245,2,25,10
     LTEXT           "Nom &utilisateur:",IDC_STATIC,5,32,266,8
     EDITTEXT        1001,5,42,266,12,ES_AUTOHSCROLL
     LTEXT           "Mot de &Passe:",IDC_STATIC,5,58,82,8
