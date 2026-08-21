@@ -178,8 +178,6 @@ void ResetFileInfoExtras(void *serverid)
     {
         pFileInfoExtra pTmp = NULL;
 
-        int i = 0;
-
         WCHAR wTmp[2048];
 
         awlcopy(wTmp, "/", countof(wTmp) - 1);
@@ -189,7 +187,7 @@ void ResetFileInfoExtras(void *serverid)
 
         ReplaceBackslashBySlashW(wTmp);
 
-        while (i < gFileInfoExtras.size())
+        for (size_t i = 0; i < gFileInfoExtras.size();)
         {
             pTmp = gFileInfoExtras[i];
 
@@ -197,10 +195,11 @@ void ResetFileInfoExtras(void *serverid)
             {
                 delete pTmp;
                 gFileInfoExtras.erase(gFileInfoExtras.begin() + i);
-                i--;
             }
-
-            i++;
+            else
+            {
+                i++;
+            }
         }
     }
 }
@@ -217,7 +216,7 @@ pFileInfoExtra FindFileInfoExtras(WCHAR *RemoteName)
 
     pFileInfoExtra pTmp = NULL;
 
-    for (int i = 0; i < gFileInfoExtras.size(); i++)
+    for (size_t i = 0; i < gFileInfoExtras.size(); i++)
     {
         pTmp = gFileInfoExtras[i];
 

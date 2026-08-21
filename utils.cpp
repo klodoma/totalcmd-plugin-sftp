@@ -1,12 +1,16 @@
 #include <windows.h>
+#include <wchar.h>
 #include <time.h>
 #include "utils.h"
 
 LPTSTR strcatbackslash(LPTSTR thedir)
 {
-    if (thedir[0])
-        if (thedir[strlen(thedir) - 1] != '\\')
-            strcat(thedir, "\\");
+    size_t length = strlen(thedir);
+    if (length > 0 && thedir[length - 1] != '\\')
+    {
+        thedir[length] = '\\';
+        thedir[length + 1] = 0;
+    }
     return thedir;
 }
 
@@ -28,40 +32,37 @@ char *strlcatbackslash(char *thedir, int maxlen)
 
 WCHAR *wcslcatbackslash(WCHAR *thedir, int maxlen)
 {
-    if (thedir[0] && wcslen(thedir) < (DWORD)maxlen)
-        if (thedir[wcslen(thedir) - 1] != '\\')
-            wcsncat(thedir, L"\\", maxlen);
+    size_t length = wcslen(thedir);
+    if (length > 0 && length < (size_t)maxlen && thedir[length - 1] != '\\')
+    {
+        thedir[length] = L'\\';
+        thedir[length + 1] = 0;
+    }
     return thedir;
 }
 
 void cutlastbackslash(char *thedir)
 {
-    int l = strlen(thedir);
+    size_t l = strlen(thedir);
     if (l && thedir[l - 1] == '\\')
         thedir[l - 1] = 0;
 }
 
 char *strlcpy(char *p, const char *p2, int maxlen)
 {
-    if ((int)strlen(p2) >= maxlen)
-    {
-        strncpy(p, p2, maxlen);
-        p[maxlen] = 0;
-    }
-    else
-        strcpy(p, p2);
+    size_t sourceLength = strlen(p2);
+    size_t copyLength = min(sourceLength, (size_t)maxlen);
+    memcpy(p, p2, copyLength);
+    p[copyLength] = 0;
     return p;
 }
 
 WCHAR *wcslcpy2(WCHAR *p, const WCHAR *p2, int maxlen)
 {
-    if ((int)wcslen(p2) >= maxlen)
-    {
-        wcsncpy(p, p2, maxlen);
-        p[maxlen] = 0;
-    }
-    else
-        wcscpy(p, p2);
+    size_t sourceLength = wcslen(p2);
+    size_t copyLength = min(sourceLength, (size_t)maxlen);
+    wmemcpy(p, p2, copyLength);
+    p[copyLength] = 0;
     return p;
 }
 
@@ -70,7 +71,13 @@ WCHAR *wcslcpy2(WCHAR *p, const WCHAR *p2, int maxlen)
 // strlcat wants maximum size of target buffer!!!
 char *strlcat(char *p, const char *p2, int maxlen)
 {
-    return strncat(p, p2, maxlen - strlen(p));
+    size_t currentLength = strlen(p);
+    if (currentLength >= (size_t)maxlen)
+        return p;
+    size_t copyLength = min(strlen(p2), (size_t)maxlen - currentLength);
+    memcpy(p + currentLength, p2, copyLength);
+    p[currentLength + copyLength] = 0;
+    return p;
 }
 
 char *ReplaceBackslashBySlash(char *thedir)
@@ -160,18 +167,20 @@ BOOL ConvertIsoDateToDateTime(char *pdatetimefield, FILETIME *ft)
 
 BOOL UnixTimeToLocalTime(time_t *mtime, LPFILETIME ft)
 {
-    struct tm *fttm = gmtime(mtime);
+    struct tm fttm;
+    if (gmtime_s(&fttm, mtime) != 0)
+        return false;
     SYSTEMTIME st;
     FILETIME ft2;
 
-    st.wYear = fttm->tm_year;
+    st.wYear = fttm.tm_year;
     if (st.wYear < 200)
         st.wYear += 1900;
-    st.wMonth = fttm->tm_mon + 1; // 0-11 in struct tm*
-    st.wDay = fttm->tm_mday;
-    st.wHour = fttm->tm_hour;
-    st.wMinute = fttm->tm_min;
-    st.wSecond = fttm->tm_sec;
+    st.wMonth = fttm.tm_mon + 1; // 0-11 in struct tm*
+    st.wDay = fttm.tm_mday;
+    st.wHour = fttm.tm_hour;
+    st.wMinute = fttm.tm_min;
+    st.wSecond = fttm.tm_sec;
     st.wDayOfWeek = 0;
     st.wMilliseconds = 0;
     if (SystemTimeToFileTime(&st, &ft2))
@@ -191,7 +200,7 @@ void Conv2Chars(char *buf, int nr)
     }
     else
     {
-        _itoa(nr, buf, 10);
+        _itoa_s(nr, buf, 3, 10);
     }
 }
 
@@ -203,7 +212,7 @@ BOOL CreateIsoDateString(FILETIME *ft, char *buf)
     FileTimeToLocalFileTime(ft, &ft2); // Totalcmd expects system time!
     if (FileTimeToSystemTime(&ft2, &datetime))
     {
-        _itoa(datetime.wYear, buf, 10);
+        _itoa_s(datetime.wYear, buf, 5, 10);
         Conv2Chars(buf + 4, datetime.wMonth);
         Conv2Chars(buf + 6, datetime.wDay);
         Conv2Chars(buf + 8, datetime.wHour);
@@ -279,7 +288,7 @@ void MimeEncode(char *inputstr, char *outputstr, int maxlen)
     char buf[8];
     int i, j, readbytes;
     outputstr[0] = 0;
-    j = strlen(inputstr);
+    j = (int)strlen(inputstr);
     readbytes = j;
     i = 0;
     while (i < readbytes)
@@ -358,7 +367,7 @@ void ReplaceEnvVars(char *buf, int buflen) // Replace %name% by environment vari
         if (p1)
         {
             p1[0] = 0;
-            strcpy(envname, p + 1);
+            strlcpy(envname, p + 1, sizeof(envname) - 1);
             p1[0] = '%';
             if (GetEnvironmentVariable(envname, envbuf, MAX_PATH - 1))
                 p2 = envbuf;
@@ -382,8 +391,8 @@ void ReplaceSubString(char *buf, const char *fromstr, const char *tostr, int max
 {
     char buf2[1024];
     char *p;
-    int L = strlen(fromstr);
-    int L2 = strlen(tostr);
+    int L = (int)strlen(fromstr);
+    int L2 = (int)strlen(tostr);
     if (L == 0) // nothing to do
         return;
     p = buf;
@@ -415,7 +424,7 @@ BOOL ParseAddress(char *serverstring, char *addr, unsigned short *port, int defp
         if (p)
         {
             p[0] = 0;
-            strcpy(addr, tmp + 1);
+            strlcpy(addr, tmp + 1, MAX_PATH - 1);
             if (p[1] == ':')
             {
                 p += 2;
@@ -444,7 +453,7 @@ BOOL ParseAddress(char *serverstring, char *addr, unsigned short *port, int defp
             // hostname, numeric IPv4 or IPv6, all without port
             *port = defport;
         }
-        strcpy(addr, tmp);
+        strlcpy(addr, tmp, MAX_PATH - 1);
         return TRUE;
     }
 }
@@ -481,10 +490,10 @@ bool filematchw(WCHAR *swild, WCHAR *slbox)
     WCHAR *ppat, *pbuf, *pendbuf, *PosOfStar;
     bool failed, retval;
 
-    wcscpy(pattern, swild);
-    _wcsupr(pattern);
-    wcscpy(buffer, slbox);
-    _wcsupr(buffer);
+    wcslcpy2(pattern, swild, countof(pattern) - 1);
+    _wcsupr_s(pattern, countof(pattern));
+    wcslcpy2(buffer, slbox, countof(buffer) - 1);
+    _wcsupr_s(buffer, countof(buffer));
     retval = false;
     failed = false;
     ppat = pattern;
@@ -553,9 +562,9 @@ WCHAR *wcstok2(WCHAR *name)
     if (p3)
         if (!p2)
             p2 = p3;
-        else if ((DWORD)(p2) > (DWORD)(p3))
+        else if (p2 > p3)
             p2 = p3;
-    if (!p1 || (p2 && (DWORD)(p1) > (DWORD)(p2)))
+    if (!p1 || (p2 && p1 > p2))
     {
         retval = wcstok2_p0;
         wcstok2_p0 = p2;
@@ -629,7 +638,7 @@ void RemoveDoubleSpaces(char *s)
     if (s == NULL)
         return;
 
-    int count = strlen(s);
+    int count = (int)strlen(s);
 
     for (int i = 0; i < count - 1; i++)
     {
@@ -691,5 +700,5 @@ int EscapeWithDoubleQuotes(char *target, char *src, int maxlen)
             break;
         }
     }
-    return pend - ptrg;
+    return (int)(pend - ptrg);
 }

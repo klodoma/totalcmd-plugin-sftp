@@ -2,6 +2,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#include <VersionHelpers.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include "sftpfunc.h"
@@ -63,6 +64,35 @@ void EncryptString(LPCTSTR pszPlain, LPTSTR pszEncrypted, UINT cchEncrypted);
 void DecryptString(LPCTSTR pszEncrypted, LPTSTR pszPlain, UINT cchPlain);
 void OverwriteWithZeroes(char *buf, int len);
 void OverwriteStackWithZeroes();
+
+static bool ParseIPv4Address(const char *address, unsigned long *hostAddress)
+{
+    IN_ADDR parsedAddress;
+    if (InetPtonA(AF_INET, address, &parsedAddress) != 1)
+        return false;
+    *hostAddress = parsedAddress.S_un.S_addr;
+    return true;
+}
+
+static bool ResolveIPv4Address(const char *address, unsigned long *hostAddress)
+{
+    if (ParseIPv4Address(address, hostAddress))
+        return true;
+
+    ADDRINFOA hints;
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    PADDRINFOA result = NULL;
+    if (GetAddrInfoA(address, NULL, &hints, &result) != 0)
+    {
+        *hostAddress = INADDR_NONE;
+        return false;
+    }
+    *hostAddress = ((sockaddr_in *)result->ai_addr)->sin_addr.s_addr;
+    FreeAddrInfoA(result);
+    return true;
+}
 static void LoadSshConfigSettings(const char *HostName, pConnectSettings ConnectResults);
 
 struct TemporarySshConfigOverrideGuard
@@ -365,10 +395,7 @@ BOOL LoadSSHLib()
         }
         if (!sshlib)
         {
-            OSVERSIONINFO vx;
-            vx.dwOSVersionInfoSize = sizeof(vx);
-            GetVersionEx(&vx);
-            if (vx.dwPlatformId == VER_PLATFORM_WIN32_NT && vx.dwMajorVersion < 6)
+            if (!IsWindowsVistaOrGreater())
             { // XP or older?
                 GetModuleFileName(hinst, dllname, sizeof(dllname) - 10);
                 char *p = strrchr(dllname, '\\');
@@ -489,7 +516,7 @@ static void DecodeProtectedPassword(char *password, pProtectedPassword pwd)
 
 static void EncodeProtectedPassword(pProtectedPassword pwd, char *password)
 {
-    pwd->length = strlen(password);
+    pwd->length = (int)strlen(password);
     EncryptString(password, pwd->password, MAX_PASSWORD);
 }
 
@@ -503,14 +530,14 @@ static void kbd_callback(const char *name, int name_len, const char *instruction
     {
         // Special case: Pass the stored password as the first response to the interactive prompts
         // Note: We may get multiple calls to kbd_callback - this is tracked with "InteractivePasswordSent"
-        strlcpy(retbuf, (const char *)prompts[i].text, min(prompts[i].length, sizeof(retbuf) - 1));
+        strlcpy(retbuf, (const char *)prompts[i].text, (int)min(prompts[i].length, sizeof(retbuf) - 1));
         ShowStatus(retbuf);
         pConnectSettings ConnectSettings = (pConnectSettings)*abstract;
         BOOL autoSendPassword = (ConnectSettings && ConnectSettings->protectedpassword.length > 0 &&
                                  !ConnectSettings->InteractivePasswordSent);
         if (autoSendPassword)
         {
-            _strlwr(retbuf);
+            _strlwr_s(retbuf, sizeof(retbuf));
             // it must contain "pass"
             if (strstr(retbuf, "pass") == NULL)
                 autoSendPassword = false;
@@ -524,7 +551,7 @@ static void kbd_callback(const char *name, int name_len, const char *instruction
             char password[MAX_PASSWORD];
             DecodeProtectedPassword(password, &ConnectSettings->protectedpassword);
             char *p = strstr(password, "\",\"");
-            int len = strlen(password);
+            int len = (int)strlen(password);
             if (p && password[0] == '"' && password[len - 1] == '"')
             {
                 // two passwords -> use second one!
@@ -556,7 +583,7 @@ static void kbd_callback(const char *name, int name_len, const char *instruction
             }
             if (prompts[i].length && prompts[i].text)
             {
-                strlcpy(retbuf, (const char *)prompts[i].text, min(prompts[i].length, sizeof(retbuf) - 1));
+                strlcpy(retbuf, (const char *)prompts[i].text, (int)min(prompts[i].length, sizeof(retbuf) - 1));
                 strlcat(buf, retbuf, sizeof(buf) - 1);
             }
             if (buf[0] == 0)
@@ -654,11 +681,11 @@ void SftpLogLastError(char *errtext, int errnr)
     if (errnr >= 0)
     {
         strlcat(errbuf, "(", sizeof(errbuf) - 2);
-        _itoa(errnr, errbuf + strlen(errbuf), 10);
+        _itoa_s(errnr, errbuf + strlen(errbuf), sizeof(errbuf) - strlen(errbuf), 10);
         strlcat(errbuf, ")", sizeof(errbuf) - 1);
     }
     else
-        _itoa(errnr, errbuf + strlen(errbuf), 10);
+        _itoa_s(errnr, errbuf + strlen(errbuf), sizeof(errbuf) - strlen(errbuf), 10);
     LogProc(PluginNumber, MSGTYPE_IMPORTANTERROR, errbuf);
 }
 
@@ -701,12 +728,8 @@ void LogConnectionAttempt(const char *displayName, const char *server, unsigned 
         strlcpy(logPath, "sftp_connections.log", sizeof(logPath) - 1);
     }
 
-#ifdef sprintf_s
     sprintf_s(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour,
               st.wMinute, st.wSecond);
-#else
-    sprintf(timestamp, "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
-#endif
 
     HANDLE hFile = CreateFile(logPath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
                               FILE_ATTRIBUTE_NORMAL, NULL);
@@ -736,14 +759,9 @@ void LogConnectionAttempt(const char *displayName, const char *server, unsigned 
                 proxyTypeStr = "Unknown";
                 break;
             }
-#ifdef sprintf_s
             sprintf_s(proxyText, sizeof(proxyText), " (via %s proxy)", proxyTypeStr);
-#else
-            sprintf(proxyText, " (via %s proxy)", proxyTypeStr);
-#endif
         }
 
-#ifdef sprintf_s
         if (errorDetails && errorDetails[0])
         {
             sprintf_s(logEntry, sizeof(logEntry), "[%s] %s | Connection: %s | Server: %s:%d | User: %s%s | %s: %s\r\n",
@@ -754,18 +772,6 @@ void LogConnectionAttempt(const char *displayName, const char *server, unsigned 
             sprintf_s(logEntry, sizeof(logEntry), "[%s] %s | Connection: %s | Server: %s:%d | User: %s%s\r\n",
                       timestamp, status, displayName, server, port, user, proxyText);
         }
-#else
-        if (errorDetails && errorDetails[0])
-        {
-            sprintf(logEntry, "[%s] %s | Connection: %s | Server: %s:%d | User: %s%s | %s: %s\r\n", timestamp, status,
-                    displayName, server, port, user, proxyText, detailLabel, errorDetails);
-        }
-        else
-        {
-            sprintf(logEntry, "[%s] %s | Connection: %s | Server: %s:%d | User: %s%s\r\n", timestamp, status,
-                    displayName, server, port, user, proxyText);
-        }
-#endif
 
         DWORD written;
         WriteFile(hFile, logEntry, (DWORD)strlen(logEntry), &written, NULL);
@@ -943,15 +949,9 @@ int SftpConnect(pConnectSettings ConnectSettings)
     }
 
     char detailBuf[512];
-#ifdef sprintf_s
     sprintf_s(detailBuf, sizeof(detailBuf), "Attempting connection - PubKey: %s, PrivKey: %s, UseAgent: %d",
               ConnectSettings->pubkeyfile[0] ? ConnectSettings->pubkeyfile : "none",
               ConnectSettings->privkeyfile[0] ? ConnectSettings->privkeyfile : "none", ConnectSettings->useagent);
-#else
-    sprintf(detailBuf, "Attempting connection - PubKey: %s, PrivKey: %s, UseAgent: %d",
-            ConnectSettings->pubkeyfile[0] ? ConnectSettings->pubkeyfile : "none",
-            ConnectSettings->privkeyfile[0] ? ConnectSettings->privkeyfile : "none", ConnectSettings->useagent);
-#endif
     LogConnectionAttempt(ConnectSettings->DisplayName, ConnectSettings->server, ConnectSettings->customport,
                          ConnectSettings->user, ConnectSettings->proxytype, "ATTEMPTING", detailBuf);
 
@@ -959,11 +959,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
     {
         char buf[128], buf1[128];
         LoadStr(buf1, IDS_SSH2_TOO_OLD);
-#ifdef sprintf_s
         sprintf_s(buf, 128, buf1, LIBSSH2_VERSION);
-#else
-        sprintf(buf, buf1, LIBSSH2_VERSION);
-#endif
         MessageBox(GetActiveWindow(), buf, "Error", MB_ICONSTOP);
         return SFTP_FAILED;
     }
@@ -1017,14 +1013,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
 
         if (!pgetaddrinfo)
         {
-            hostaddr = inet_addr(connecttoserver);
-            if (hostaddr == INADDR_NONE)
-            {
-                hostent *hostinfo;
-                hostinfo = (struct hostent *)gethostbyname(connecttoserver);
-                if (hostinfo)
-                    memcpy(&hostaddr, hostinfo->h_addr_list[0], 4);
-            }
+            ResolveIPv4Address(connecttoserver, &hostaddr);
             ConnectSettings->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
             sin.sin_family = AF_INET;
@@ -1072,11 +1061,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                 break;
             }
             hints.ai_socktype = SOCK_STREAM;
-#ifdef sprintf_s
             sprintf_s(buf, sizeof(buf), "%d", connecttoport);
-#else
-            sprintf(buf, "%d", connecttoport);
-#endif
             if (pgetaddrinfo(connecttoserver, buf, &hints, &res) != 0)
             {
                 ShowErrorId(IDS_ERR_GETADDRINFO);
@@ -1091,7 +1076,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                 {
                     len = (DWORD)sizeof(buf) - (DWORD)strlen(buf);
                     strlcpy(buf, "IP address: ", sizeof(buf) - 1);
-                    pWSAAddressToString(ai->ai_addr, ai->ai_addrlen, NULL, buf + (DWORD)strlen(buf), (LPDWORD)&len);
+                    pWSAAddressToString(ai->ai_addr, (DWORD)ai->ai_addrlen, NULL, buf + (DWORD)strlen(buf), (LPDWORD)&len);
                     ShowStatus(buf);
                 }
                 SetBlockingSocket(ConnectSettings->sock, false);
@@ -1147,21 +1132,11 @@ int SftpConnect(pConnectSettings ConnectSettings)
             }
             // Send "CONNECT hostname:port HTTP/1.1"<CRLF>"Host: hostname:port"<2xCRLF> to the proxy
             if (IsNumericIPv6(ConnectSettings->server))
-#ifdef sprintf_s
                 sprintf_s(buf, sizeof(buf), "CONNECT [%s]:%d HTTP/1.1\r\nHost: [%s]:%d\r\n", ConnectSettings->server,
                           ConnectSettings->customport, ConnectSettings->server, ConnectSettings->customport);
-#else
-                sprintf(buf, "CONNECT [%s]:%d HTTP/1.1\r\nHost: [%s]:%d\r\n", ConnectSettings->server,
-                        ConnectSettings->customport, ConnectSettings->server, ConnectSettings->customport);
-#endif
             else
-#ifdef sprintf_s
                 sprintf_s(buf, sizeof(buf), "CONNECT %s:%d HTTP/1.1\r\nHost: %s:%d\r\n", ConnectSettings->server,
                           ConnectSettings->customport, ConnectSettings->server, ConnectSettings->customport);
-#else
-                sprintf(buf, "CONNECT %s:%d HTTP/1.1\r\nHost: %s:%d\r\n", ConnectSettings->server,
-                        ConnectSettings->customport, ConnectSettings->server, ConnectSettings->customport);
-#endif
             if (ConnectSettings->proxyuser[0])
             {
                 char buf1[250], buf2[500], title[250];
@@ -1250,8 +1225,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             *((unsigned short *)&buf[2]) = htons(ConnectSettings->customport);
 
             // numerical IPv4 given?
-            hostaddr = inet_addr(ConnectSettings->server);
-            if (hostaddr == INADDR_NONE)
+            if (!ParseIPv4Address(ConnectSettings->server, &hostaddr))
                 *((unsigned long *)&buf[4]) = htonl(0x00000001);
             else
                 *((unsigned long *)&buf[4]) = hostaddr; // it's already in network order!
@@ -1340,8 +1314,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             buf[1] = 1; // TCP connect
             buf[2] = 0; // reserved
 
-            hostaddr = inet_addr(ConnectSettings->server);
-            if (hostaddr != INADDR_NONE)
+            if (ParseIPv4Address(ConnectSettings->server, &hostaddr))
             {
                 buf[3] = 1;                             // addrtype (IPv4)
                 *((unsigned long *)&buf[4]) = hostaddr; // it's already in network order!
@@ -1355,11 +1328,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                     memset(&hints, 0, sizeof(hints));
                     hints.ai_family = AF_INET6;
                     hints.ai_socktype = SOCK_STREAM;
-#ifdef sprintf_s
                     sprintf_s(buf, sizeof(buf), "%d", connecttoport);
-#else
-                    sprintf(buf, "%d", connecttoport);
-#endif
                     if (pgetaddrinfo(ConnectSettings->server, buf, &hints, &res) == 0 &&
                         res->ai_addrlen >= sizeof(sockaddr_in6))
                     {
@@ -1414,11 +1383,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                 default: {
                     char buf2[MAX_PATH];
                     LoadStr(buf2, IDS_UNKNOWNSOCKERR);
-#ifdef sprintf_s
                     sprintf_s(buf, sizeof(buf), buf2, buf[1]);
-#else
-                    sprintf(buf, buf2, buf[1]);
-#endif
                 }
                 }
                 ShowError(buf);
@@ -1504,8 +1469,8 @@ int SftpConnect(pConnectSettings ConnectSettings)
         char prefs[260];
         for (int method = 0; method <= 9; method++)
         {
-            strcpy(buf, "prefmethod");
-            _itoa(method, buf + strlen(buf), 10);
+            strlcpy(buf, "prefmethod", sizeof(buf) - 1);
+            _itoa_s(method, buf + strlen(buf), sizeof(buf) - strlen(buf), 10);
             GetPrivateProfileString(ConnectSettings->DisplayName, buf, "", prefs, sizeof(prefs) - 1,
                                     ConnectSettings->IniFileName);
             if (prefs[0])
@@ -1619,11 +1584,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             for (int i = 0; i < 16; i++)
             {
                 char buf1[20];
-#ifdef sprintf_s
                 sprintf_s(buf1, sizeof(buf1), "%02X", (unsigned char)fingerprint[i]);
-#else
-                sprintf(buf1, "%02X", (unsigned char)fingerprint[i]);
-#endif
                 strlcat(buf, buf1, sizeof(buf) - 1);
                 if (i < 15)
                     strlcat(buf, " ", sizeof(buf) - 1);
@@ -1693,11 +1654,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             LoadStr(buf, IDS_SUPPORTED_AUTH_METHODS);
             strlcat(buf, userauthlist, sizeof(buf) - 1);
             ShowStatus(buf);
-#ifdef _strlwr_s
             _strlwr_s(userauthlist, strlen(userauthlist) + 1);
-#else
-            _strlwr(userauthlist);
-#endif
             if (strstr(userauthlist, "password") != NULL)
             {
                 auth_pw |= 1;
@@ -1919,7 +1876,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                                 if (strncmp(p2, "-----BEGIN OPENSSH PRIVATE KEY-----", 35) == 0)
                                 {
                                     char outbuf[64];
-                                    int l = MimeDecode(p, min(64, strlen(p)), outbuf, sizeof(outbuf));
+                                    int l = MimeDecode(p, (int)min((size_t)64, strlen(p)), outbuf, sizeof(outbuf));
                                     for (int i = 0; i < l - 6; i++)
                                     {
                                         if (outbuf[i] == 'b' && strncmp(outbuf + i, "bcrypt", 6) == 0)
@@ -1947,7 +1904,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                             char password[MAX_PASSWORD];
                             DecodeProtectedPassword(password, &ConnectSettings->protectedpassword);
                             char *p = strstr(password, "\",\"");
-                            int len = strlen(password);
+                            int len = (int)strlen(password);
                             if (p && password[0] == '"' && password[len - 1] == '"')
                             {
                                 // two passwords -> use second one!
@@ -2027,7 +1984,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                 char passphrase[256];
                 DecodeProtectedPassword(password, &ConnectSettings->protectedpassword);
                 char *p = strstr(password, "\",\"");
-                int len = strlen(password);
+                int len = (int)strlen(password);
                 if (p && password[0] == '"' && password[len - 1] == '"')
                 {
                     // two passwords -> use second one!
@@ -2057,7 +2014,8 @@ int SftpConnect(pConnectSettings ConnectSettings)
                 while (1)
                 {
                     auth = libssh2_userauth_password_ex(ConnectSettings->session, ConnectSettings->user,
-                                                        strlen(ConnectSettings->user), passphrase, strlen(passphrase),
+                                                        (unsigned int)strlen(ConnectSettings->user), passphrase,
+                                                        (unsigned int)strlen(passphrase),
                                                         &newpassfunc);
                     if (auth != LIBSSH2_ERROR_EAGAIN && auth != LIBSSH2_ERROR_PASSWORD_EXPIRED)
                         break;
@@ -2109,11 +2067,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             reply[0] = 0;
             if (SftpQuoteCommand2(ConnectSettings, NULL, cmdname, reply, sizeof(reply) - 1) == 0)
             {
-#ifdef _strupr_s
                 _strupr_s(reply, sizeof(reply));
-#else
-                _strupr(reply);
-#endif
                 if (strstr(reply, "UTF-8"))
                     ConnectSettings->utf8names = 1;
                 else
@@ -2121,11 +2075,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                     strlcpy(cmdname, "locale", sizeof(cmdname) - 1);
                     if (SftpQuoteCommand2(ConnectSettings, NULL, cmdname, reply, sizeof(reply) - 1) == 0)
                     {
-#ifdef _strupr_s
                         _strupr_s(reply, sizeof(reply));
-#else
-                        _strupr(reply);
-#endif
                         if (strstr(reply, "UTF-8"))
                             ConnectSettings->utf8names = 1;
                     }
@@ -2145,11 +2095,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             reply[0] = 0;
             if (SftpQuoteCommand2(ConnectSettings, NULL, cmdname, reply, sizeof(reply) - 1) == 0)
             {
-#ifdef _strupr_s
                 _strupr_s(reply, sizeof(reply));
-#else
-                _strupr(reply);
-#endif
                 if (strstr(reply, "LINUX") || strstr(reply, "UNIX") || strstr(reply, "AIX"))
                     ConnectSettings->unixlinebreaks = 1;
                 else
@@ -2259,11 +2205,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             reply[0] = 0;
             if (SftpQuoteCommand2(ConnectSettings, NULL, cmdname, reply, sizeof(reply) - 1) == 0)
             {
-#ifdef _strupr_s
                 _strupr_s(reply, sizeof(reply));
-#else
-                _strupr(reply);
-#endif
                 // /usr/bin/scp: ELF 32-bit LSB executable, ARM ...
                 // /usr/bin/scp: ELF 64-bit LSB shared object, x86-64 ...
                 if (strstr(reply, "64-BIT"))
@@ -2397,13 +2339,9 @@ void EncryptString(LPCTSTR pszPlain, LPTSTR pszEncrypted, UINT cchEncrypted)
 
     for (int iChar = 0; iChar < iPlainLength; iChar++)
     {
-#ifdef sprintf_s
-        sprintf_s(pszEncrypted, cchEncrypted, ("%s%03d"), pszEncrypted,
+        size_t encryptedLength = strlen(pszEncrypted);
+        sprintf_s(pszEncrypted + encryptedLength, cchEncrypted - encryptedLength, "%03d",
                   (unsigned char)pszPlain[iChar] ^ (unsigned char)g_pszKey[(iChar + iPos) % iKeyLength]);
-#else
-        sprintf(pszEncrypted, ("%s%03d"), pszEncrypted,
-                (unsigned char)pszPlain[iChar] ^ (unsigned char)g_pszKey[(iChar + iPos) % iKeyLength]);
-#endif
     }
 }
 
@@ -2481,11 +2419,7 @@ BOOL LoadProxySettingsFromNr(int proxynr, pConnectSettings ConnectResults)
     {
         TCHAR proxyentry[64];
         if (proxynr > 1)
-#ifdef sprintf_s
             sprintf_s(proxyentry, sizeof(proxyentry), "proxy%d", proxynr);
-#else
-            sprintf(proxyentry, "proxy%d", proxynr);
-#endif
         else
             strlcpy(proxyentry, "proxy", sizeof(proxyentry) - 1);
         int type = GetPrivateProfileInt(proxyentry, "proxytype", -1, gIniFileName);
@@ -2587,15 +2521,11 @@ static void ExpandSshConfigPath(const char *value, const char *profilePath, char
     if (value[0] == '~')
     {
         const char *subPath = (value[1] == '/' || value[1] == '\\') ? value + 2 : value + 1;
-#ifdef sprintf_s
         sprintf_s(out, outSize, "%s\\%s", profilePath, subPath);
-#else
-        sprintf(out, "%s\\%s", profilePath, subPath);
-#endif
     }
     else
     {
-        strlcpy(out, value, outSize - 1);
+        strlcpy(out, value, (int)outSize - 1);
     }
     for (char *p = out; *p; p++)
     {
@@ -2630,11 +2560,7 @@ static void ApplySshConfigMatch(const SshConfigMatch &match, const char *request
         if (ConnectResults->pubkeyfile[0] == 0)
         {
             char pubKeyFile[MAX_PATH];
-#ifdef sprintf_s
             sprintf_s(pubKeyFile, sizeof(pubKeyFile), "%s.pub", match.identityFile);
-#else
-            sprintf(pubKeyFile, "%s.pub", match.identityFile);
-#endif
             if (GetFileAttributesA(pubKeyFile) != INVALID_FILE_ATTRIBUTES)
                 strlcpy(ConnectResults->pubkeyfile, pubKeyFile, sizeof(ConnectResults->pubkeyfile) - 1);
             else
@@ -2651,11 +2577,7 @@ static void LoadSshConfigSettings(const char *HostName, pConnectSettings Connect
         return;
 
     char configPath[MAX_PATH];
-#ifdef sprintf_s
     sprintf_s(configPath, sizeof(configPath), "%s\\.ssh\\config", profilePath);
-#else
-    sprintf(configPath, "%s\\.ssh\\config", profilePath);
-#endif
 
     FILE *f = NULL;
     if (fopen_s(&f, configPath, "r") != 0 || !f)
@@ -2866,11 +2788,7 @@ myint __stdcall ProxyDlgProc(HWND hWnd, unsigned int Message, WPARAM wParam, LPA
         {
             char proxyentry[64];
             if (gProxyNr > 1)
-#ifdef sprintf_s
                 sprintf_s(proxyentry, sizeof(proxyentry), "proxy%d", gProxyNr);
-#else
-                sprintf(proxyentry, "proxy%d", gProxyNr);
-#endif
             else
                 strlcpy(proxyentry, "proxy", sizeof(proxyentry) - 1);
             strlcat(proxyentry, "$$pass", sizeof(proxyentry) - 1);
@@ -2936,11 +2854,7 @@ myint __stdcall ProxyDlgProc(HWND hWnd, unsigned int Message, WPARAM wParam, LPA
 
             char proxyentry[64];
             if (gProxyNr > 1)
-#ifdef sprintf_s
                 sprintf_s(proxyentry, sizeof(proxyentry), "proxy%d", gProxyNr);
-#else
-                sprintf(proxyentry, "proxy%d", gProxyNr);
-#endif
             else
                 strlcpy(proxyentry, "proxy", sizeof(proxyentry) - 1);
 
@@ -3007,11 +2921,7 @@ myint __stdcall ProxyDlgProc(HWND hWnd, unsigned int Message, WPARAM wParam, LPA
             int err;
             TCHAR proxyentry[64];
             if (gProxyNr > 1)
-#ifdef sprintf_s
                 sprintf_s(proxyentry, sizeof(proxyentry), "proxy%d", gProxyNr);
-#else
-                sprintf(proxyentry, "proxy%d", gProxyNr);
-#endif
             else
                 strlcpy(proxyentry, "proxy", sizeof(proxyentry) - 1);
             strlcat(proxyentry, "$$pass", sizeof(proxyentry) - 1);
@@ -3060,11 +2970,7 @@ void fillProxyCombobox(HWND hWnd, int defproxynr)
     {
         if (LoadProxySettingsFromNr(proxynr, &connectData))
         {
-#ifdef sprintf_s
             sprintf_s(buf, sizeof(buf), TEXT("%d: "), proxynr);
-#else
-            sprintf(buf, TEXT("%d: "), proxynr);
-#endif
             switch (connectData.proxytype)
             {
             case 0:
@@ -3121,11 +3027,7 @@ BOOL DeleteLastProxy(int proxynrtodelete, char *ServerToSkip, char *AppendToList
     if (CanDelete)
     {
         char proxyentry[64];
-#ifdef sprintf_s
         sprintf_s(proxyentry, sizeof(proxyentry), "proxy%d", proxynrtodelete);
-#else
-        sprintf(proxyentry, "proxy%d", proxynrtodelete);
-#endif
         WritePrivateProfileString(proxyentry, NULL, NULL, gIniFileName);
     }
     return CanDelete;
@@ -3708,11 +3610,7 @@ void *SftpConnectToServer(char *DisplayName, char *inifilename, pProtectedPasswo
         {
             TCHAR proxyentry[64];
             if (gConnectResults->proxynr > 1)
-#ifdef sprintf_s
                 sprintf_s(proxyentry, sizeof(proxyentry), "proxy%d", gConnectResults->proxynr);
-#else
-                sprintf(proxyentry, "proxy%d", gConnectResults->proxynr);
-#endif
             else
                 strlcpy(proxyentry, "proxy", sizeof(proxyentry) - 1);
             strlcat(proxyentry, "$$pass", sizeof(proxyentry) - 1);
@@ -3955,15 +3853,15 @@ int SftpFindFirstFileW(void *serverid, WCHAR *remotedir, void **davdataptr, char
         char commandbuf[wdirtypemax + 100];
         int trycustom = ConnectSettings->trycustomlistcommand;
         if (trycustom >= 1)
-            strcpy(commandbuf, "export LC_ALL=C\n");
+            strlcpy(commandbuf, "export LC_ALL=C\n", sizeof(commandbuf) - 1);
         else
             commandbuf[0] = 0;
-        int lencmd0 = strlen(commandbuf);
+        int lencmd0 = (int)strlen(commandbuf);
         strlcat(commandbuf, "ls -la ", sizeof(commandbuf) - 1);
-        int lencmd1 = strlen(commandbuf);
+        int lencmd1 = (int)strlen(commandbuf);
         if (trycustom == 2)
             strlcat(commandbuf, "--time-style=\"+>>%Y%m%d_%H%M%S\" ", sizeof(commandbuf) - 1);
-        int lencmd2 = strlen(commandbuf);
+        int lencmd2 = (int)strlen(commandbuf);
 
         BOOL needquotes = strchr(dirname, ' ') != NULL || strchr(dirname, '(') != NULL || strchr(dirname, ')') != NULL;
         if (needquotes)
@@ -3994,8 +3892,8 @@ int SftpFindFirstFileW(void *serverid, WCHAR *remotedir, void **davdataptr, char
             {
                 errorbuf[0] = 0;
                 if (rc == 0 || rc == LIBSSH2_ERROR_EAGAIN)
-                    rc = libssh2_channel_read(channel, &firstchar, 1);
-                rcerr = libssh2_channel_read_stderr(channel, errorbuf, 1023);
+                    rc = (int)libssh2_channel_read(channel, &firstchar, 1);
+                rcerr = (int)libssh2_channel_read_stderr(channel, errorbuf, 1023);
                 if (rcerr > 0)
                 {
                     errorbuf[rcerr] = 0;
@@ -4297,8 +4195,10 @@ BOOL SftpFindNextFileW(void *serverid, void *davdataptr, WIN32_FIND_DATAW *FindD
                     ZeroMemory(info->szPermissions, countof(info->szPermissions));
                     ZeroMemory(info->wszLinkDestination, countof(info->wszLinkDestination));
 
-                    strncpy(info->szUser, &completeline[LOWORD(v[2])], HIWORD(v[2]));
-                    strncpy(info->szGroup, &completeline[LOWORD(v[3])], HIWORD(v[3]));
+                    memcpy_s(info->szUser, sizeof(info->szUser), &completeline[LOWORD(v[2])],
+                             min((size_t)HIWORD(v[2]), sizeof(info->szUser) - 1));
+                    memcpy_s(info->szGroup, sizeof(info->szGroup), &completeline[LOWORD(v[3])],
+                             min((size_t)HIWORD(v[3]), sizeof(info->szGroup) - 1));
 
                     if (file.flags & LIBSSH2_SFTP_ATTR_PERMISSIONS)
                     {
@@ -4339,7 +4239,7 @@ BOOL SftpFindNextFileW(void *serverid, void *davdataptr, WIN32_FIND_DATAW *FindD
                         }
                     }
                     else
-                        strcpy(info->szPermissions, "----");
+                        strlcpy(info->szPermissions, "----", sizeof(info->szPermissions) - 1);
 
                     SetFileInfoExtras(ConnectSettings, info);
                 }
@@ -4932,7 +4832,7 @@ int SftpDownloadFileW(void *serverid, WCHAR *RemoteName, WCHAR *LocalName, BOOL 
             else
             {
                 char errbuf[1024];
-                int rcerr = libssh2_channel_read_stderr(remotefilescp, errbuf, sizeof(errbuf) - 1);
+                int rcerr = (int)libssh2_channel_read_stderr(remotefilescp, errbuf, sizeof(errbuf) - 1);
                 if (rcerr > 0)
                 {
                     errbuf[rcerr] = 0;
@@ -5087,12 +4987,12 @@ int SftpDownloadFileW(void *serverid, WCHAR *RemoteName, WCHAR *LocalName, BOOL 
                 break;
             // Note: We must limit the receive buffer so we don't
             // read beyond the length of the file, otherwise we will get 1 byte too much!
-            len = lenOrg = libssh2_channel_read(remotefilescp, data, (size_t)min(scpremain, maxblocksize));
+            len = lenOrg = (int)libssh2_channel_read(remotefilescp, data, (size_t)min(scpremain, maxblocksize));
             if (len > 0)
                 scpremain -= len;
         }
         else
-            len = lenOrg = libssh2_sftp_read(remotefilesftp, data, maxblocksize);
+            len = lenOrg = (int)libssh2_sftp_read(remotefilesftp, data, maxblocksize);
 
         if (len > 0)
         {
@@ -5516,7 +5416,7 @@ int SftpUploadFileW(void *serverid, WCHAR *LocalName, WCHAR *RemoteName, BOOL Re
                 return SFTP_READFAILED;
             }
             char errbuf[1024];
-            int rcerr = libssh2_channel_read_stderr(remotefilescp, errbuf, sizeof(errbuf) - 1);
+            int rcerr = (int)libssh2_channel_read_stderr(remotefilescp, errbuf, sizeof(errbuf) - 1);
             if (rcerr > 0)
             {
                 errbuf[rcerr] = 0;
@@ -5635,9 +5535,9 @@ int SftpUploadFileW(void *serverid, WCHAR *LocalName, WCHAR *RemoteName, BOOL Re
                 do
                 {
                     if (scpdata)
-                        written = libssh2_channel_write(remotefilescp, &data[offset], len);
+                        written = (int)libssh2_channel_write(remotefilescp, &data[offset], len);
                     else
-                        written = libssh2_sftp_write(remotefilesftp, &data[offset], len);
+                        written = (int)libssh2_sftp_write(remotefilesftp, &data[offset], len);
                     if (written >= 0)
                     {
                         if (written > (int)len)
@@ -5676,9 +5576,9 @@ int SftpUploadFileW(void *serverid, WCHAR *LocalName, WCHAR *RemoteName, BOOL Re
                         while (written == LIBSSH2_ERROR_EAGAIN)
                         {
                             if (scpdata)
-                                written = libssh2_channel_write(remotefilescp, &data[offset], len);
+                                written = (int)libssh2_channel_write(remotefilescp, &data[offset], len);
                             else
-                                written = libssh2_sftp_write(remotefilesftp, &data[offset], len);
+                                written = (int)libssh2_sftp_write(remotefilesftp, &data[offset], len);
                             if (GetTickCount() - starttime > 5000)
                                 break;
                             IsSocketWritable(ConnectSettings->sock); // sleep to avoid 100% CPU!
@@ -5863,7 +5763,7 @@ int SftpDeleteFileW(void *serverid, WCHAR *RemoteName, BOOL isdir)
             if (isdir)
                 rc = libssh2_sftp_rmdir(ConnectSettings->sftpsession, dirname);
             else
-                rc = libssh2_sftp_unlink(ConnectSettings->sftpsession, dirname);
+                rc = libssh2_sftp_unlink_ex(ConnectSettings->sftpsession, dirname, (unsigned int)strlen(dirname));
 
             int delta = (int)GetTickCount() - starttime;
             if (delta > 2000 && aborttime == -1)
@@ -5889,7 +5789,7 @@ int SftpDeleteFileW(void *serverid, WCHAR *RemoteName, BOOL isdir)
             LoadStr(abuf, IDS_ERR_DELETE);
             libssh2_session_last_error(ConnectSettings->session, &errmsg, &errmsg_len, false);
             awlcopy(buf, abuf, countof(buf) - 1);
-            awlcopy(buf + wcslen(buf), errmsg, countof(buf) - wcslen(buf) - 1);
+            awlcopy(buf + wcslen(buf), errmsg, (int)(countof(buf) - wcslen(buf) - 1));
             wcslcat(buf, L" ", countof(buf) - 1);
             wcslcat(buf, RemoteName, countof(buf) - 1);
             ShowStatusW(buf);
@@ -5934,13 +5834,8 @@ int SftpSetDateTimeW(void *serverid, WCHAR *RemoteName, FILETIME *LastWriteTime)
         channel = ConnectChannel(ConnectSettings->session);
         FileTimeToLocalFileTime(LastWriteTime, &lft);
         FileTimeToSystemTime(&lft, &tdt);
-#ifdef sprintf_s
         sprintf_s(commandbuf, sizeof(commandbuf), "touch -t %04d%02d%02d%02d%02d.%02d ", tdt.wYear, tdt.wMonth,
                   tdt.wDay, tdt.wHour, tdt.wMinute, tdt.wSecond);
-#else
-        sprintf(commandbuf, "touch -t %04d%02d%02d%02d%02d.%02d ", tdt.wYear, tdt.wMonth, tdt.wDay, tdt.wHour,
-                tdt.wMinute, tdt.wSecond);
-#endif
         BOOL needquotes =
             strchr(filename, ' ') != NULL || strchr(filename, '(') != NULL || strchr(filename, ')') != NULL;
         if (needquotes)
@@ -6151,7 +6046,7 @@ BOOL SftpLinkFolderTargetW(void *serverid, WCHAR *RemoteName, int maxlen)
             BOOL isadir = false;
             if (SftpQuoteCommand2W(ConnectSettings, NULL, cmdname, ReturnedName, 2048 - 1) == 0)
             {
-                _strlwr(ReturnedName);
+                _strlwr_s(ReturnedName, sizeof(ReturnedName));
                 char *p = strstr(ReturnedName, "size:");
                 if (p)
                 {
@@ -6291,7 +6186,7 @@ LIBSSH2_CHANNEL *ConnectChannel(LIBSSH2_SESSION *session)
             strlcat(errmsg, ": Channel failure", sizeof(errmsg) - 1);
             break;
         default:
-            _itoa(err, numbuf, 10);
+            _itoa_s(err, numbuf, sizeof(numbuf), 10);
             strlcat(errmsg, ": Error code ", sizeof(errmsg) - 1);
             strlcat(errmsg, numbuf, sizeof(errmsg) - 1);
             break;
@@ -6390,8 +6285,8 @@ BOOL ReadChannelLine(LIBSSH2_CHANNEL *channel, char *line, int linelen, char *ms
         { // end signal AND no more data!
             endreceived = true;
         }
-        rcerr = libssh2_channel_read_stderr(channel, perr, remainerr);
-        rc = libssh2_channel_read(channel, p, remain);
+        rcerr = (int)libssh2_channel_read_stderr(channel, perr, remainerr);
+        rc = (int)libssh2_channel_read(channel, p, remain);
         if (EscapePressed())
             break;
         if (rcerr > 0)
@@ -6549,11 +6444,7 @@ int SftpQuoteCommand2(void *serverid, char *remotedir, char *cmd, char *reply, i
     rc = libssh2_channel_get_exit_status(channel);
     if (rc != 0)
     { // read stderr
-#ifdef sprintf_s
         sprintf_s(msgbuf, sizeof(msgbuf), "Function return code: %d", rc);
-#else
-        sprintf(msgbuf, "Function return code: %d", rc);
-#endif
         ShowStatus(msgbuf);
         if (errbuf[0])
         {
@@ -6682,11 +6573,7 @@ int SftpQuoteCommand2W(void *serverid, WCHAR *remotedir, WCHAR *cmd, char *reply
     rc = libssh2_channel_get_exit_status(channel);
     if (rc != 0)
     { // read stderr
-#ifdef sprintf_s
         sprintf_s(msgbuf, sizeof(msgbuf), "Function return code: %d", rc);
-#else
-        sprintf(msgbuf, "Function return code: %d", rc);
-#endif
         ShowStatus(msgbuf);
         if (errbuf[0])
         {
@@ -7002,7 +6889,7 @@ myint __stdcall PropDlgProc(HWND hWnd, unsigned int Message, WPARAM wParam, LPAR
                     p[16] = ' ';
                     p[19] = ' ';
                     tdt.wMilliseconds = 0;
-                    sscanf(p, "%hd %hd %hd %hd %hd %hd", &tdt.wYear, &tdt.wMonth, &tdt.wDay, &tdt.wHour, &tdt.wMinute,
+                    sscanf_s(p, "%hd %hd %hd %hd %hd %hd", &tdt.wYear, &tdt.wMonth, &tdt.wDay, &tdt.wHour, &tdt.wMinute,
                            &tdt.wSecond);
                     p2 = strchr(p + 19, '-');
                     if (!p2)
@@ -7030,13 +6917,8 @@ myint __stdcall PropDlgProc(HWND hWnd, unsigned int Message, WPARAM wParam, LPAR
                     FileTimeToLocalFileTime(&ft, &lft);
                     FileTimeToSystemTime(&lft, &tdt);
                     char buf[128];
-#ifdef sprintf_s
                     sprintf_s(buf, sizeof(buf), "%d-%02d-%02d %02d:%02d:%02d (local)", tdt.wYear, tdt.wMonth, tdt.wDay,
                               tdt.wHour, tdt.wMinute, tdt.wSecond);
-#else
-                    sprintf(buf, "%d-%02d-%02d %02d:%02d:%02d (local)", tdt.wYear, tdt.wMonth, tdt.wDay, tdt.wHour,
-                            tdt.wMinute, tdt.wSecond);
-#endif
                     SetDlgItemText(hWnd, IDC_PROP_MODIFIED, buf);
                 }
                 else
@@ -7311,7 +7193,7 @@ int SftpServerSupportsChecksumsW(void *serverid, WCHAR *RemoteName)
     int buflen = 0;
     while (!libssh2_channel_eof(channel))
     {
-        int len2 = libssh2_channel_read(channel, buf + buflen, sizeof(buf) - buflen - 1);
+        int len2 = (int)libssh2_channel_read(channel, buf + buflen, sizeof(buf) - buflen - 1);
         if (len2 > 0)
             buflen += len2;
         if (!libssh2_channel_eof(channel))
@@ -7419,7 +7301,7 @@ int SftpGetFileChecksumResultW(BOOL WantResult, HANDLE ChecksumHandle, void *ser
         int buflen = 0;
         while (!libssh2_channel_eof(channel))
         {
-            int len2 = libssh2_channel_read(channel, buf + buflen, sizeof(buf) - buflen - 1);
+            int len2 = (int)libssh2_channel_read(channel, buf + buflen, sizeof(buf) - buflen - 1);
             if (len2 > 0)
                 buflen += len2;
             else
@@ -7442,7 +7324,7 @@ int SftpGetFileChecksumResultW(BOOL WantResult, HANDLE ChecksumHandle, void *ser
         char *pend = p;
         while (IsHexChar(pend[0]))
             pend++;
-        int len = (pend - p);
+        int len = (int)(pend - p);
         if (len > maxlen)
             len = maxlen;
         if (len > 0)

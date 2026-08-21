@@ -139,7 +139,7 @@ WCHAR *FindUnixPermissions(WCHAR *lpStr, DWORD *UnixAttr)
     if (LineContainsonlySlashes(lpStr))
         return NULL;
     *UnixAttr = 0;
-    imax = wcslen(lpStr) - 10;
+    imax = (int)wcslen(lpStr) - 10;
     if (imax > 10)
         imax = 10; // Don't confuse file name with permissions!
     for (i = 0; i <= imax; i++)
@@ -163,7 +163,7 @@ WCHAR *FindName(WCHAR *szLine)
     int nIndex;
     WCHAR *pStr, *p;
 
-    nIndex = wcslen(szLine);
+    nIndex = (int)wcslen(szLine);
 
     /* strip trailing garbage from the line if there is any. */
     while (nIndex > 2 && wcschr(szTrim, szLine[nIndex - 1]))
@@ -216,7 +216,7 @@ WCHAR *FindNameUnix(WCHAR *szLine, int *link, BOOL longdatetype) /*Search with D
     WCHAR *result;
 
     *link = 0; /*No link*/
-    nIndex = wcslen(szLine);
+    nIndex = (int)wcslen(szLine);
     p = szLine;
     /* strip trailing garbage from the line if there is any. */
     while (nIndex > 2 && wcschr(szTrim, szLine[nIndex - 1]))
@@ -226,7 +226,7 @@ WCHAR *FindNameUnix(WCHAR *szLine, int *link, BOOL longdatetype) /*Search with D
     }
 
     wcslcpy2(linebuf, szLine, countof(linebuf) - 1);
-    CharUpperBuffW(linebuf, wcslen(linebuf));
+    CharUpperBuffW(linebuf, (DWORD)wcslen(linebuf));
     p = linebuf;
     /* now look for the DATE! */
 
@@ -415,7 +415,7 @@ void ReadDateTimeSizeUnix(WCHAR *lpS, FILETIME *datetime, __int64 *sizefile)
     datetime->dwHighDateTime = -1;
     datetime->dwLowDateTime = -1;
     *sizefile = -1;
-    CharUpperBuffW(lpstr, wcslen(lpstr));
+    CharUpperBuffW(lpstr, (DWORD)wcslen(lpstr));
     t.wMonth = 0;
     monthpos = NULL;
     for (i = 1; i <= 36; i++)
@@ -551,7 +551,9 @@ void ReadDateTimeSizeUnix(WCHAR *lpS, FILETIME *datetime, __int64 *sizefile)
                         if (!isadigit(lpsize[0]))
                             *sizefile = GetSizeFromFront(lpstr);
                         lp1 = lp;
-                        wcscat(lp, L" ");
+                        size_t lpLength = wcslen(lp);
+                        lp[lpLength] = L' ';
+                        lp[lpLength + 1] = 0;
                     }
                     else
                         t.wDay = 0;
@@ -570,14 +572,15 @@ void ReadDateTimeSizeUnix(WCHAR *lpS, FILETIME *datetime, __int64 *sizefile)
                     lp = wcschr(lp1, ':');
                     if (lp)
                     { /*Zeit*/
-                        lp = wcstok(lp1, L":");
+                        WCHAR *tokenContext = NULL;
+                        lp = wcstok_s(lp1, L":", &tokenContext);
                         t.wHour = _wtoi(lp);
                         longdatetype = lp[5] == ':';
-                        lp = wcstok(NULL, L":");
+                        lp = wcstok_s(NULL, L":", &tokenContext);
                         t.wMinute = _wtoi(lp);
                         if (longdatetype)
                         {
-                            lp = wcstok(NULL, L":");
+                            lp = wcstok_s(NULL, L":", &tokenContext);
                             t.wSecond = _wtoi(lp);
                             lpyear[4] = 0;
                             t.wYear = _wtoi(lpyear);
@@ -712,7 +715,7 @@ BOOL ReadDirLineUNIX(WCHAR *lpStr, WCHAR *thename, int maxlen, __int64 *sizefile
     *UnixAttr = 0;
     WCHAR testbuf[8];
     wcslcpy2(testbuf, lpStr, 6);
-    _wcsupr(testbuf);
+    _wcsupr_s(testbuf, countof(testbuf));
     if (wcsncmp(testbuf, L"TOTAL", 5) == 0)
         return false;
 

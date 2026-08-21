@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <wchar.h>
 #include "fsplugin.h"
 #include "cunicode.h"
 
@@ -14,15 +15,7 @@ char usysychecked = 0;
 BOOL usys()
 {
     if (!usysychecked)
-    {
-        OSVERSIONINFO vx;
-        vx.dwOSVersionInfoSize = sizeof(vx);
-        GetVersionEx(&vx);
-        if (vx.dwPlatformId == VER_PLATFORM_WIN32_NT)
-            usysychecked = 1;
-        else
-            usysychecked = 2;
-    }
+        usysychecked = 1; // all supported Windows versions use the NT platform
     return (usysychecked == 1);
 }
 
@@ -78,11 +71,11 @@ WCHAR *wcslcpy(WCHAR *str1, const WCHAR *str2, int imaxlen)
 {
     if ((int)wcslen(str2) >= imaxlen - 1)
     {
-        wcsncpy(str1, str2, imaxlen - 1);
+        wmemcpy(str1, str2, imaxlen - 1);
         str1[imaxlen - 1] = 0;
     }
     else
-        wcscpy(str1, str2);
+        wmemcpy(str1, str2, wcslen(str2) + 1);
     return str1;
 }
 
@@ -91,11 +84,11 @@ WCHAR *wcslcat(wchar_t *str1, const WCHAR *str2, int imaxlen)
     int l1 = (int)wcslen(str1);
     if ((int)wcslen(str2) + l1 >= imaxlen - 1)
     {
-        wcsncpy(str1 + l1, str2, imaxlen - 1 - l1);
+        wmemcpy(str1 + l1, str2, imaxlen - 1 - l1);
         str1[imaxlen - 1] = 0;
     }
     else
-        wcscat(str1, str2);
+        wmemcpy(str1 + l1, str2, wcslen(str2) + 1);
     return str1;
 }
 
