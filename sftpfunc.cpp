@@ -2598,13 +2598,13 @@ static void ExpandSshConfigPath(const char *value, const char *profilePath, char
 // settings, without overwriting anything the user already configured explicitly.
 static void ApplySshConfigMatch(const SshConfigMatch &match, const char *requestedHost, pConnectSettings ConnectResults)
 {
-    // Real host name (and optional port) to connect to.
+    // Real host name to connect to (only when HostName directive is present).
     if (match.hasHostName && (ConnectResults->server[0] == 0 || _stricmp(ConnectResults->server, requestedHost) == 0))
-    {
         strlcpy(ConnectResults->server, match.hostName, sizeof(ConnectResults->server) - 1);
-        if (match.port > 0)
-            ConnectResults->customport = (unsigned short)match.port;
-    }
+
+    // Port (independent of HostName).
+    if (match.port > 0 && ConnectResults->customport == 0)
+        ConnectResults->customport = (unsigned short)match.port;
 
     // User name (only if not already specified).
     if (ConnectResults->user[0] == 0 && match.user[0] != 0)
