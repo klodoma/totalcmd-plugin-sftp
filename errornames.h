@@ -37,7 +37,7 @@
  * OF SUCH DAMAGE.
  */
 
-static char* ERRORNAMES[] = {
+static const char *const ERRORNAMES[] = {
 "NONE",//                  0
 "SOCKET_NONE",  // -1
 "BANNER_NONE",  // -2
