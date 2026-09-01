@@ -245,7 +245,7 @@
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PrecompiledHeaderOutputFile>.\Debug/sftpplug.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)sftpplug.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>./x64/Debug/</AssemblerListingLocation>
       <ObjectFileName>./x64/Debug/</ObjectFileName>
       <ProgramDataBaseFileName>./x64/Debug/</ProgramDataBaseFileName>
@@ -266,7 +266,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\sftpplug.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\Debug/sftpplug.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(IntDir)sftpplug.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\Debug/sftpplug.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
       <SubSystem>Windows</SubSystem>
