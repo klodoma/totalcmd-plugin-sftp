@@ -758,8 +758,8 @@ void LogConnectionAttempt(const char *displayName, const char *server, unsigned 
         sprintf_s(logEntry, sizeof(logEntry), "[%s] %s | Connection: %s | Server: %s:%d | User: %s%s\r\n", timestamp,
                   status, displayName, server, port, user, proxyText);
     }
-
-    LogProc(PluginNumber, MSGTYPE_IMPORTANTERROR, logEntry);
+    int msgType = (_stricmp(status, "FAILED") == 0) ? MSGTYPE_IMPORTANTERROR : MSGTYPE_DETAILS;
+    LogProc(PluginNumber, msgType, logEntry);
 }
 
 void SetBlockingSocket(SOCKET s, BOOL blocking)
