@@ -158,7 +158,7 @@
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <PrecompiledHeaderOutputFile>.\Release/sftpplug.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)sftpplug.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>./x64/Release/</AssemblerListingLocation>
       <ObjectFileName>./x64/Release/</ObjectFileName>
       <ProgramDataBaseFileName>./x64/Release/</ProgramDataBaseFileName>
@@ -175,7 +175,7 @@
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>.\sftpplug.def</ModuleDefinitionFile>
-      <ProgramDatabaseFile>.\Release/sftpplug.pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(IntDir)sftpplug.pdb</ProgramDatabaseFile>
       <ImportLibrary>.\Release/sftpplug.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
       <SubSystem>Windows</SubSystem>
