@@ -1,21 +1,23 @@
-# Visual Studio user state and caches
+# Visual Studio
 .vs/
-ipch/
-*.user
+*.vcxproj.user
 *.suo
+*.user
+*.userosscache
+*.sln.docstates
 *.ncb
 *.opt
 *.plg
 *.sdf
 *.opensdf
 *.ipch
+ipch/
 *.VC.db
 *.VC.VC.opendb
 *.cachefile
-*.userosscache
-*.sln.docstates
+*.aps
 
-# Build directories
+# Build output
 Debug/
 Release/
 x64/
@@ -23,12 +25,7 @@ x86/
 Win32/
 ARM/
 ARM64/
-wfx/
-
-# Compiler and linker output
 *.obj
-*.pch
-*.res
 *.ilk
 *.pdb
 *.idb
@@ -39,22 +36,26 @@ wfx/
 !deps/libssh2/*.dll
 !deps/libssh2/64/*.dll
 *.exe
-*.wfx
-*.wfx64
+*.res
+*.pch
+*.log
 *.tlog
 *.lastbuildstate
 *.iobj
 *.ipdb
 
+# Output plugin binaries
+wfx/
+*.wfx
+*.wfx64
+
 # Release packages
 dist/
 
 # Generated logs and reports
-*.log
 BuildLog.htm
 
-# Visual Studio resource and upgrade artifacts
-*.aps
+# VS project upgrade artifacts
 Backup/
 UpgradeLog.htm
 UpgradeLog*.XML
