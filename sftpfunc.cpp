@@ -691,7 +691,7 @@ void SftpLogLastError(char *errtext, int errnr)
         strlcat(errbuf, ")", sizeof(errbuf) - 1);
     }
     else
-        _itoa_s(errnr, errbuf + strlen(errbuf), sizeof(errbuf), 10);
+        _itoa_s(errnr, errbuf + strlen(errbuf), sizeof(errbuf) - strlen(errbuf), 10);
     LogProc(PluginNumber, MSGTYPE_IMPORTANTERROR, errbuf);
 }
 
