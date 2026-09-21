@@ -20,6 +20,18 @@ tree can be far behind `main`.
 | `review.md` | working a round with the GitLab AI reviewer |
 | `secrets.md` | what never gets printed, what must not be regenerated |
 | `infra.md` | the servers, folder layout, ports, the devauth gate |
+| `check.py` | verifies the files above are unedited — see below |
+
+## Checking these files are unedited
+
+```bash
+python3 .agents/check.py        # exits 1 and names anything edited here
+```
+
+It reads only `MANIFEST.json` and the files beside it — no network, no
+`agent-standards` checkout — so CI, a pre-commit hook and a server tree can all
+ask. A repo with no manifest passes, so adopting the rules is never a
+prerequisite for a green pipeline.
 
 `.claude/skills/` and `.claude/commands/` are vendored by the same tool, from
 `agent-standards/claude/`, and the same rule applies to them — see `.claude/README.md`. The

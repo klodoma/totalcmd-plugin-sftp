@@ -24,16 +24,81 @@ def run(cmd, check=True):
     return p
 
 
+def api_list(command):
+    """Read every page, including when a full page is followed by an empty one."""
+    items = []
+    page = 1
+    while True:
+        paged = list(command)
+        paged[2] += "?per_page=100&page=%d" % page
+        batch = json.loads(run(paged).stdout)
+        items.extend(batch)
+        if len(batch) < 100:
+            return items
+        page += 1
+
+
+def remote_id(url):
+    """Any git remote spelling -> 'host/group/repo', lowercased. None if unrecognised.
+
+    Written to compare two remotes for identity, so the parts that can differ
+    between spellings of the same repo are dropped: the scheme, a user prefix, the
+    port (git-over-ssh is 5023 here while the web URL is 443) and a `.git` suffix.
+    """
+    u = (url or "").strip()
+    if not u:
+        return None
+    u = re.sub(r"\.git$", "", u)
+    m = re.match(r"^[A-Za-z][A-Za-z0-9+.\-]*://(?:[^@/]+@)?([^/:]+)(?::\d+)?/(.+)$", u)
+    if not m:  # scp-style: git@host:group/repo
+        m = re.match(r"^(?:[^@/]+@)?([^:/]+):(.+)$", u)
+    return ("%s/%s" % (m.group(1), m.group(2))).lower() if m else None
+
+
 def parse_target(target):
-    """'!88' | '88' | 'MR 88' | full MR URL  ->  (iid, repo_url_or_None)"""
+    """'!88' | '88' | 'MR 88' | 'group/repo!88' | full MR URL -> (iid, repo_or_None).
+
+    Every form is anchored, and an unrecognised one is refused rather than
+    guessed at. The earlier version searched for the first run of digits
+    anywhere in the string, which read `evosys21/guitar-tabs!28` as merge
+    request 21 -- a real merge request, in the *current* project, reviewed
+    without a word about the one that was asked for. `commands.md` documents
+    `group/repo!56` as the way to cross projects, so it has to be the thing
+    that happens.
+    """
     t = target.strip()
-    m = re.match(r"^(https?://[^\s]+?)/-/merge_requests/(\d+)", t)
+
+    m = re.match(r"^(https?://\S+?)/-/merge_requests/(\d+)", t)
     if m:
         return m.group(2), m.group(1)
-    m = re.search(r"(\d+)", t)
-    if not m:
-        sys.exit("Cannot read an MR number from %r. Use !88, 88, or the MR URL." % target)
-    return m.group(1), None
+
+    m = re.match(r"^([\w.\-]+(?:/[\w.\-]+)+)\s*!\s*(\d+)$", t)
+    if m:
+        return m.group(2), m.group(1)
+
+    m = re.match(r"^(?:MR\s*)?!?\s*(\d+)$", t, re.IGNORECASE)
+    if m:
+        return m.group(1), None
+
+    sys.exit("Cannot read a merge request from %r.\n"
+             "Use 88, !88, group/repo!88, or the full merge request URL." % target)
+
+
+def project_url(path):
+    """'group/repo' -> a full URL on the host this checkout's origin points at.
+
+    glab's short `--repo group/project` form resolves against the DEFAULT host and
+    404s on a self-hosted instance, so the host has to come from somewhere. The
+    session is rooted in one repo on one instance (`commands.md`), so that repo's
+    origin is the right place to take it from -- and if there is no origin to ask,
+    say so rather than quietly falling back to gitlab.com.
+    """
+    remote = run(["git", "remote", "get-url", "origin"], check=False).stdout.strip()
+    ident = remote_id(remote)
+    if not ident:
+        sys.exit("%r names a project but not a host, and this directory has no "
+                 "origin to take one from. Pass the full merge request URL." % path)
+    return "https://%s/%s" % (ident.split("/")[0], path)
 
 
 def main():
@@ -42,10 +107,13 @@ def main():
     ap.add_argument("outdir", help="directory to write the context bundle into")
     args = ap.parse_args()
 
-    iid, repo_url = parse_target(args.target)
+    iid, repo = parse_target(args.target)
     # glab's short --repo group/project form resolves against the DEFAULT host and 404s on
-    # self-hosted instances, so when we were given a URL we pass the URL through verbatim.
-    repo_flag = ["--repo", repo_url] if repo_url else []
+    # self-hosted instances, so a URL is passed through verbatim and a bare group/repo is
+    # given the host of this checkout's origin.
+    if repo and not repo.startswith("http"):
+        repo = project_url(repo)
+    repo_flag = ["--repo", repo] if repo else []
 
     os.makedirs(args.outdir, exist_ok=True)
 
@@ -67,7 +135,7 @@ def main():
     write("diff.patch", diff)
 
     changes = json.loads(run(api("changes")).stdout)
-    discussions = json.loads(run(api("discussions")).stdout)
+    discussions = api_list(api("discussions"))
     write("discussions.json", json.dumps(discussions, indent=2))
 
     # GitLab returns bookkeeping ("added 1 commit", "changed the description") as notes too.
@@ -96,11 +164,21 @@ def main():
     # Make the MR's commits readable locally without touching the working tree or any branch:
     # no checkout, no stash, nothing for the user to clean up afterwards. Only possible when
     # the current directory is the clone this MR belongs to.
+    #
+    # The identity test is the whole host and path, not the repo's basename. A
+    # basename appearing anywhere in the origin URL also matches a fork, another
+    # group's repo of the same name, and another instance entirely -- and the
+    # failure is silent in the worst way: `refs/merge-requests/<iid>/head` almost
+    # certainly exists in that other project too, so the fetch succeeds and the
+    # header then sends the reviewer to read a different merge request's code
+    # under the right number.
     local = False
     inside = run(["git", "rev-parse", "--is-inside-work-tree"], check=False)
     if inside.returncode == 0 and inside.stdout.strip() == "true":
         remote = run(["git", "remote", "get-url", "origin"], check=False).stdout.strip()
-        if project.split("/")[-1].lower() in remote.lower():
+        here = remote_id(remote)
+        mr_host = urllib.parse.urlparse(mr["web_url"]).netloc.split(":")[0]
+        if here and here == ("%s/%s" % (mr_host, project)).lower():
             fetched = run(["git", "fetch", "-q", "origin",
                            "refs/merge-requests/%s/head:refs/mr/%s" % (iid, iid)], check=False)
             local = fetched.returncode == 0

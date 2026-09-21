@@ -32,3 +32,20 @@ jobs:
             wfx/sftpplug.wfx
             wfx/sftpplug.wfx64
           if-no-files-found: error
+
+  # The shared agent rules in .agents/ and .claude/ are vendored from the
+  # agent-standards repo and are changed there, not here. An edited copy looks
+  # exactly like an untouched one, and the diff of such an edit is just the
+  # edit, so nothing in a review flags it. The checker ships with the rules and
+  # is stdlib-only, so this needs no setup-python and no network.
+  #
+  # ubuntu, not windows-latest like `build`: it reads files and hashes them, and
+  # the hashes are line-ending independent by construction.
+  agents-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Vendored agent rules are unedited
+        run: python3 .agents/check.py
