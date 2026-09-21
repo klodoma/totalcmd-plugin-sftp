@@ -1,0 +1,26 @@
+{
+  "note": "Written by agents-sync. Do not edit these files here -- change them in agent-standards and sync.",
+  "upstream": "ssh://git@gitlab.evo21.ch:5023/evo21/agent-standards.git",
+  "ref": "feat/agents-sync-and-claude-layer",
+  "commit": "7d3b100c592d83c55d45cfa5cf63ead8f01f2101",
+  "commit_date": "2026-09-21",
+  "synced": "2026-09-21",
+  "files": {
+    ".agents/README.md": "27572f03259f05c9b6f79e6a61834bdc832b310846cd2a9b604b58b823799b25",
+    ".agents/commands.md": "be83c9627b4a0f2a6c46eac46d12337e4ea429632be173bb47222d9798e652ea",
+    ".agents/communication.md": "0549469d8a98e71ce4bac8b0d89bd8eb88db6c667dffcfb49fe3917dbb50f571",
+    ".agents/infra.md": "5e3ea08c434c555176457e0836923d999d34cc0faaec1328116e0bc6eb121ed8",
+    ".agents/review.md": "f3bf64451c06b7e365cf4b42a0b085aa4e6e05075f02b0bc58a60112fea77f09",
+    ".agents/secrets.md": "71ff51e5241a56454dbd0b636e1d16e3b6b6949a08aa5838f1a642fcdb446f7f",
+    ".agents/workflow.md": "099cda5479d581db3c8876f5970eb08963f1f00e9ccfd01c73075dde6f654406",
+    ".claude/README.md": "31e81cf5085fe857d1d1e4d240390e487c1558f721c24871ea12af09639de007",
+    ".claude/commands/aif.md": "a872ec4f34d886e60e0ffe89ee763666350ae72365f6fe9bf5555e6f13108dac",
+    ".claude/commands/air.md": "a2854a96d95870b02c47ee159169076d19ac664dcee3f09e1621e01a3db6014f",
+    ".claude/commands/bpmr.md": "cdddcc26ed14e18634b0e7ac1f1140c178acd5de5a0450ac06b4d74082b89d9f",
+    ".claude/commands/mrr.md": "2f8022f857be9797655194f03bc1ff11faa7b15549f012c9056d3eaf661989f9",
+    ".claude/commands/sc.md": "7fc60b2688b57c5298d111e7313a059d464a0b336ce7eeebbdc6408352b63446",
+    ".claude/commands/st.md": "e32206a307642ce5ed6a8a4d738696512e08dcc6d9539c6f9d03457eb1aebf9a",
+    ".claude/skills/mr/SKILL.md": "f61e4fdf2e370ef5215b908c54c2612c848520cecd7a0928e46c35c1faa346fb",
+    ".claude/skills/mr/scripts/mr_context.py": "d770277b65c3ebc4852df67ed2876a998e590fed61bcf17578ee89c628b60a96"
+  }
+}

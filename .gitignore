@@ -61,3 +61,19 @@ _UpgradeReport_Files/
 Thumbs.db
 Desktop.ini
 ehthumbs.db
+
+# Claude Code's own runtime state under .claude/. The vendored .claude/skills/
+# and .claude/commands/ ARE source and are tracked -- these are the per-machine
+# scratch files that appear beside them once the folder exists.
+/.claude/launch.json
+/.claude/settings.local.json
+/.claude/worktrees/
+/.claude/checkpoints/
+/.claude/mailbox/
+/.claude/routines/.state/
+/.claude/scheduled_tasks.json
+/.claude/scheduled_tasks.lock
+/.claude/agent-registry.json
+/.claude/agent-memory-local/
+/.claude/first-run
+/.claude/assistant-daemon-state.json
