@@ -2,18 +2,6 @@
 #include <time.h>
 #include "utils.h"
 
-LPTSTR strcatbackslash(LPTSTR thedir)
-{
-    if (thedir[0])
-        if (thedir[strlen(thedir) - 1] != '\\')
-        {
-            size_t length = strlen(thedir);
-            thedir[length] = '\\';
-            thedir[length + 1] = 0;
-        }
-    return thedir;
-}
-
 LPTSTR strlcatforwardslash(LPTSTR thedir, int maxlen)
 {
     if (thedir[0])

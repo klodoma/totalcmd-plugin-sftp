@@ -5,7 +5,6 @@ char *strlcpy(char *p, const char *p2, int maxlen);
 char *strlcat(char *p, const char *p2, int maxlen);
 WCHAR *wcslcpy2(WCHAR *p, const WCHAR *p2, int maxlen);
 WORD Crc16CalcBlock(char *p, int len, WORD crc16);
-LPTSTR strcatbackslash(LPTSTR thedir);
 LPTSTR strlcatforwardslash(LPTSTR thedir, int maxlen);
 char *strlcatbackslash(char *thedir, int maxlen);
 WCHAR *wcslcatbackslash(WCHAR *thedir, int maxlen);
@@ -31,4 +30,3 @@ int EscapeWithDoubleQuotes(char *target, char *src, int maxlen);
 #ifndef countof
 #define countof(array) (sizeof(array) / sizeof(array[0]))
 #endif // countof
-

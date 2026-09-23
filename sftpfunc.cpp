@@ -13,6 +13,7 @@
 #include "CVTUTF.H"
 #include "cunicode.h"
 #include "ftpdir.h"
+#include "errornames.h"
 
 #ifdef WIN64
 #define myint INT_PTR
@@ -102,6 +103,7 @@ typedef int(WINAPI *tfreeaddrinfo)(IN LPADDRINFO pAddrInfo);
 typedef int(WINAPI *tWSAAddressToStringA)(IN LPSOCKADDR lpsaAddress, IN DWORD dwAddressLength, IN void *lpProtocolInfo,
                                           IN OUT LPSTR lpszAddressString, IN OUT LPDWORD lpdwAddressStringLength);
 
+// "p"-prefixed: ws2tcpip.h/winsock2.h already declare the real functions on this SDK, so bare names would clash
 tgetaddrinfo pgetaddrinfo = NULL;
 tfreeaddrinfo pfreeaddrinfo = NULL;
 tWSAAddressToStringA pWSAAddressToString = NULL;
@@ -110,9 +112,11 @@ static unsigned long ParseNumericIPv4(const char *address)
 {
     sockaddr_in socketAddress = {};
     int socketAddressLength = sizeof(socketAddress);
-    WCHAR addressBuffer[MAX_PATH] = L"";
-    if (MultiByteToWideChar(CP_ACP, 0, address, -1, addressBuffer, _countof(addressBuffer)) == 0)
-        return INADDR_NONE;
+    WCHAR addressBuffer[MAX_PATH] = L"";
+
+    if (MultiByteToWideChar(CP_ACP, 0, address, -1, addressBuffer, _countof(addressBuffer)) == 0)
+        return INADDR_NONE;
+
     if (WSAStringToAddressW(addressBuffer, AF_INET, NULL, reinterpret_cast<sockaddr *>(&socketAddress),
                             &socketAddressLength) == 0)
         return socketAddress.sin_addr.s_addr;
@@ -125,10 +129,10 @@ static unsigned long ResolveLegacyIPv4(const char *address)
     if (result != INADDR_NONE)
         return result;
 
-    typedef hostent *(WSAAPI *GetHostByNameProc)(const char *);
+    typedef hostent *(WSAAPI * GetHostByNameProc)(const char *);
     HMODULE winsock = GetModuleHandleA("ws2_32.dll");
-    GetHostByNameProc resolveHost = winsock ? reinterpret_cast<GetHostByNameProc>(GetProcAddress(winsock, "gethostbyname"))
-                                            : NULL;
+    GetHostByNameProc resolveHost =
+        winsock ? reinterpret_cast<GetHostByNameProc>(GetProcAddress(winsock, "gethostbyname")) : NULL;
     hostent *hostInfo = resolveHost ? resolveHost(address) : NULL;
     if (hostInfo && hostInfo->h_addr_list[0])
         memcpy(&result, hostInfo->h_addr_list[0], sizeof(result));
@@ -455,7 +459,7 @@ BOOL LoadSSHLib()
         loadOK = true;
         loadAgent = true;
 
-        // the following will load all the functions!
+// the following will load all the functions!
 #undef FUNCDEF
 #undef FUNCDEF2
 #define FUNCDEF(r, f, p) f = (t##f)GetProcAddress2(sshlib, #f)
@@ -483,6 +487,7 @@ BOOL LoadSSHLib()
             HINSTANCE ws2lib = LoadLibraryA(ws2libname);
             if (ws2lib)
             {
+                // "p"-prefixed to avoid name clash
                 pgetaddrinfo = (tgetaddrinfo)GetProcAddress(ws2lib, "getaddrinfo");
                 pfreeaddrinfo = (tfreeaddrinfo)GetProcAddress(ws2lib, "freeaddrinfo");
                 pWSAAddressToString = (tWSAAddressToStringA)GetProcAddress(ws2lib, "WSAAddressToStringA");
@@ -530,8 +535,7 @@ static void kbd_callback(const char *name, int name_len, const char *instruction
     {
         // Special case: Pass the stored password as the first response to the interactive prompts
         // Note: We may get multiple calls to kbd_callback - this is tracked with "InteractivePasswordSent"
-        strlcpy(retbuf, (const char *)prompts[i].text,
-                (int)min((size_t)prompts[i].length, sizeof(retbuf) - 1));
+        strlcpy(retbuf, (const char *)prompts[i].text, (int)min((size_t)prompts[i].length, sizeof(retbuf) - 1));
         ShowStatus(retbuf);
         pConnectSettings ConnectSettings = (pConnectSettings)*abstract;
         BOOL autoSendPassword = (ConnectSettings && ConnectSettings->protectedpassword.length > 0 &&
@@ -584,8 +588,7 @@ static void kbd_callback(const char *name, int name_len, const char *instruction
             }
             if (prompts[i].length && prompts[i].text)
             {
-                strlcpy(retbuf, (const char *)prompts[i].text,
-                        (int)min((size_t)prompts[i].length, sizeof(retbuf) - 1));
+                strlcpy(retbuf, (const char *)prompts[i].text, (int)min((size_t)prompts[i].length, sizeof(retbuf) - 1));
                 strlcat(buf, retbuf, sizeof(buf) - 1);
             }
             if (buf[0] == 0)
@@ -675,14 +678,15 @@ void ShowError(char *error)
 
 void SftpLogLastError(char *errtext, int errnr)
 {
-    char errbuf[128];
+    char errbuf[1024];
     if (errnr == 0 || errnr == LIBSSH2_ERROR_EAGAIN) // no error -> do not log
         return;
-    strlcpy(errbuf, errtext, 128 - 10);
+    strlcpy(errbuf, errtext, sizeof(errbuf) - 10);
     errnr = -errnr;
-    if (errnr >= 0)
+    if (errnr >= 0 && errnr <= 47)
     {
-        strlcat(errbuf, "(", sizeof(errbuf) - 2);
+        strlcat(errbuf, ERRORNAMES[errnr], sizeof(errbuf) - 8);
+        strlcat(errbuf, " (", sizeof(errbuf) - 6);
         _itoa_s(errnr, errbuf + strlen(errbuf), sizeof(errbuf) - strlen(errbuf), 10);
         strlcat(errbuf, ")", sizeof(errbuf) - 1);
     }
@@ -713,70 +717,49 @@ void ShowErrorId(int errorid)
 void LogConnectionAttempt(const char *displayName, const char *server, unsigned short port, const char *user,
                           int proxyType, const char *status, const char *errorDetails)
 {
-    char logPath[MAX_PATH];
     char timestamp[64];
     SYSTEMTIME st;
     GetLocalTime(&st);
 
-    GetModuleFileName(hinst, logPath, sizeof(logPath) - 1);
-    char *p = strrchr(logPath, '\\');
-    if (p)
-    {
-        p[1] = 0;
-        strlcat(logPath, "sftp_connections.log", sizeof(logPath) - 1);
-    }
-    else
-    {
-        strlcpy(logPath, "sftp_connections.log", sizeof(logPath) - 1);
-    }
     sprintf_s(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay, st.wHour,
               st.wMinute, st.wSecond);
 
-    HANDLE hFile = CreateFile(logPath, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
+    char logEntry[2048];
+    char proxyText[128] = "";
+    const char *detailLabel = (_stricmp(status, "FAILED") == 0) ? "Error" : "Details";
 
-                              FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile != INVALID_HANDLE_VALUE)
+    if (proxyType > 0)
     {
-
-        char logEntry[2048];
-        char proxyText[128] = "";
-        const char *detailLabel = (_stricmp(status, "FAILED") == 0) ? "Error" : "Details";
-
-        if (proxyType > 0)
+        const char *proxyTypeStr = "";
+        switch (proxyType)
         {
-            const char *proxyTypeStr = "";
-            switch (proxyType)
-            {
-            case 2:
-                proxyTypeStr = "HTTP";
-                break;
-            case 3:
-                proxyTypeStr = "SOCKS4/4a";
-                break;
-            case 4:
-                proxyTypeStr = "SOCKS5";
-                break;
-            default:
-                proxyTypeStr = "Unknown";
-                break;
-            }
-            sprintf_s(proxyText, sizeof(proxyText), " (via %s proxy)", proxyTypeStr);
+        case 2:
+            proxyTypeStr = "HTTP";
+            break;
+        case 3:
+            proxyTypeStr = "SOCKS4/4a";
+            break;
+        case 4:
+            proxyTypeStr = "SOCKS5";
+            break;
+        default:
+            proxyTypeStr = "Unknown";
+            break;
         }
-        if (errorDetails && errorDetails[0])
-        {
-            sprintf_s(logEntry, sizeof(logEntry), "[%s] %s | Connection: %s | Server: %s:%d | User: %s%s | %s: %s\r\n",
-                      timestamp, status, displayName, server, port, user, proxyText, detailLabel, errorDetails);
-        }
-        else
-        {
-            sprintf_s(logEntry, sizeof(logEntry), "[%s] %s | Connection: %s | Server: %s:%d | User: %s%s\r\n",
-                      timestamp, status, displayName, server, port, user, proxyText);
-        }
-
-        DWORD written;
-        WriteFile(hFile, logEntry, (DWORD)strlen(logEntry), &written, NULL);
-        CloseHandle(hFile);
+        sprintf_s(proxyText, sizeof(proxyText), " (via %s proxy)", proxyTypeStr);
     }
+    if (errorDetails && errorDetails[0])
+    {
+        sprintf_s(logEntry, sizeof(logEntry), "[%s] %s | Connection: %s | Server: %s:%d | User: %s%s | %s: %s\r\n",
+                  timestamp, status, displayName, server, port, user, proxyText, detailLabel, errorDetails);
+    }
+    else
+    {
+        sprintf_s(logEntry, sizeof(logEntry), "[%s] %s | Connection: %s | Server: %s:%d | User: %s%s\r\n", timestamp,
+                  status, displayName, server, port, user, proxyText);
+    }
+    int msgType = (_stricmp(status, "FAILED") == 0) ? MSGTYPE_IMPORTANTERROR : MSGTYPE_DETAILS;
+    LogProc(PluginNumber, msgType, logEntry);
 }
 
 void SetBlockingSocket(SOCKET s, BOOL blocking)
@@ -966,7 +949,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
     {
         char buf[128], buf1[128];
         LoadStr(buf1, IDS_SSH2_TOO_OLD);
-        snprintf(buf, sizeof(buf), buf1, LIBSSH2_VERSION);
+        sprintf_s(buf, 128, buf1, LIBSSH2_VERSION);
         MessageBox(GetActiveWindow(), buf, "Error", MB_ICONSTOP);
         return SFTP_FAILED;
     }
@@ -1786,7 +1769,6 @@ int SftpConnect(pConnectSettings ConnectSettings)
                 }
                 if (auth != 0)
                     auth_pw &= 3; // all identities failed; allow the other advertised methods
-
             }
             libssh2_agent_disconnect(agent);
             libssh2_agent_free(agent);
@@ -2023,9 +2005,9 @@ int SftpConnect(pConnectSettings ConnectSettings)
                 /* We could authenticate via password */
                 while (1)
                 {
-                    auth = libssh2_userauth_password_ex(
-                        ConnectSettings->session, ConnectSettings->user, (unsigned int)strlen(ConnectSettings->user),
-                        passphrase, (unsigned int)strlen(passphrase), &newpassfunc);
+                    auth = libssh2_userauth_password_ex(ConnectSettings->session, ConnectSettings->user,
+                                                        (unsigned int)strlen(ConnectSettings->user), passphrase,
+                                                        (unsigned int)strlen(passphrase), &newpassfunc);
                     if (auth != LIBSSH2_ERROR_EAGAIN && auth != LIBSSH2_ERROR_PASSWORD_EXPIRED)
                         break;
                     if (ProgressLoop(buf, 70, 80, &loop, &lasttime))
@@ -2076,11 +2058,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             reply[0] = 0;
             if (SftpQuoteCommand2(ConnectSettings, NULL, cmdname, reply, sizeof(reply) - 1) == 0)
             {
-#ifdef _strupr_s
                 _strupr_s(reply, sizeof(reply));
-#else
-                _strupr_s(reply);
-#endif
                 if (strstr(reply, "UTF-8"))
                     ConnectSettings->utf8names = 1;
                 else
@@ -2088,11 +2066,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
                     strlcpy(cmdname, "locale", sizeof(cmdname) - 1);
                     if (SftpQuoteCommand2(ConnectSettings, NULL, cmdname, reply, sizeof(reply) - 1) == 0)
                     {
-#ifdef _strupr_s
                         _strupr_s(reply, sizeof(reply));
-#else
-                        _strupr_s(reply);
-#endif
                         if (strstr(reply, "UTF-8"))
                             ConnectSettings->utf8names = 1;
                     }
@@ -2112,11 +2086,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             reply[0] = 0;
             if (SftpQuoteCommand2(ConnectSettings, NULL, cmdname, reply, sizeof(reply) - 1) == 0)
             {
-#ifdef _strupr_s
                 _strupr_s(reply, sizeof(reply));
-#else
-                _strupr_s(reply);
-#endif
                 if (strstr(reply, "LINUX") || strstr(reply, "UNIX") || strstr(reply, "AIX"))
                     ConnectSettings->unixlinebreaks = 1;
                 else
@@ -2226,11 +2196,7 @@ int SftpConnect(pConnectSettings ConnectSettings)
             reply[0] = 0;
             if (SftpQuoteCommand2(ConnectSettings, NULL, cmdname, reply, sizeof(reply) - 1) == 0)
             {
-#ifdef _strupr_s
                 _strupr_s(reply, sizeof(reply));
-#else
-                _strupr_s(reply);
-#endif
                 // /usr/bin/scp: ELF 32-bit LSB executable, ARM ...
                 // /usr/bin/scp: ELF 64-bit LSB shared object, x86-64 ...
                 if (strstr(reply, "64-BIT"))
@@ -5015,8 +4981,7 @@ int SftpDownloadFileW(void *serverid, WCHAR *RemoteName, WCHAR *LocalName, BOOL 
                 break;
             // Note: We must limit the receive buffer so we don't
             // read beyond the length of the file, otherwise we will get 1 byte too much!
-            len = lenOrg =
-                (int)libssh2_channel_read(remotefilescp, data, (size_t)min(scpremain, maxblocksize));
+            len = lenOrg = (int)libssh2_channel_read(remotefilescp, data, (size_t)min(scpremain, maxblocksize));
             if (len > 0)
                 scpremain -= len;
         }
@@ -6798,7 +6763,7 @@ myint __stdcall PropDlgProc(HWND hWnd, unsigned int Message, WPARAM wParam, LPAR
             }
             else if (usys())
             {
-                wp = FindStatStringW(g_statreplyW, L"Gr��e:", &chw);
+                wp = FindStatStringW(g_statreplyW, L"Größe:", &chw);
                 if (wp)
                 {
                     SetDlgItemTextW(hWnd, IDC_PROP_SIZE, wp);
@@ -6920,7 +6885,7 @@ myint __stdcall PropDlgProc(HWND hWnd, unsigned int Message, WPARAM wParam, LPAR
                     p[19] = ' ';
                     tdt.wMilliseconds = 0;
                     sscanf_s(p, "%hd %hd %hd %hd %hd %hd", &tdt.wYear, &tdt.wMonth, &tdt.wDay, &tdt.wHour, &tdt.wMinute,
-                           &tdt.wSecond);
+                             &tdt.wSecond);
                     p2 = strchr(p + 19, '-');
                     if (!p2)
                     {

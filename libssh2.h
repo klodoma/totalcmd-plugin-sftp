@@ -95,7 +95,9 @@ extern "C"
 
 #ifdef LIBSSH2_WIN32
 #include <basetsd.h>
+#ifndef _WINSOCKAPI_
 #include <winsock2.h>
+#endif
 #endif
 
 #include <stddef.h>
