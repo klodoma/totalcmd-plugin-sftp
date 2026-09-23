@@ -5,12 +5,15 @@
 	by extracting the newest dist\sftpplug*.zip (or -Zip) over -Target.
 	Close Total Commander first: loaded .wfx/.dll files cannot be overwritten.
 .PARAMETER Target
-	Plugin folder to install into.
+	Plugin folder to install into, e.g. <TotalCommander>\plugins\sftpplug.
 .PARAMETER Zip
 	Package to install. Defaults to the most recently written dist\sftpplug*.zip.
+.EXAMPLE
+	bin\install.ps1 -Target "C:\Totalcmd\plugins\sftpplug"
 #>
 param(
-	[string]$Target = "C:\softkit\Totalcmd\plugins\sftpplug",
+	[Parameter(Mandatory = $true)]
+	[string]$Target,
 	[string]$Zip = ""
 )
 
