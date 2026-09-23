@@ -35,6 +35,9 @@ wfx/
 *.exp
 *.lib
 *.dll
+# ...except the bundled libssh2 (see bin/update-libssh2.ps1)
+!deps/libssh2/*.dll
+!deps/libssh2/64/*.dll
 *.exe
 *.wfx
 *.wfx64

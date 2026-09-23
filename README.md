@@ -22,5 +22,10 @@ the original plugin is held by Christian Ghisler.
 Copy the appropriate WFX file to the Total Commander plugin directory, or use
 the ZIP package and install it through Total Commander's plugin installation.
 
+The package ships its own `libssh2.dll` (32-bit) and `64\libssh2.dll` (64-bit).
+Keep them next to the WFX files: without them the plugin falls back to any
+`libssh2.dll` on `PATH` (e.g. one from PHP), which may be too old to log in to
+current OpenSSH servers with RSA keys.
+
 For supported features and configuration details, see
 [artifacts/readme.txt](artifacts/readme.txt).

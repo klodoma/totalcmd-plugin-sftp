@@ -1,8 +1,9 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-	Builds sftpplug.zip from the artifacts\ directory (static files) plus the
-	compiled wfx\sftpplug.wfx (32-bit) and wfx\sftpplug.wfx64 (64-bit).
+	Builds sftpplug.zip from the artifacts\ directory (static files), the
+	compiled wfx\sftpplug.wfx (32-bit) and wfx\sftpplug.wfx64 (64-bit), and the
+	bundled libssh2.dll / 64\libssh2.dll from deps\libssh2\.
 	Output: dist\sftpplug.zip
 .PARAMETER Version
 	Optional version string. When provided the zip is named sftpplug-<Version>.zip.
@@ -30,6 +31,33 @@ $Wfx64 = Join-Path $WfxDir "sftpplug.wfx64"
 foreach ($f in @($Wfx32, $Wfx64)) {
 	if (-not (Test-Path $f)) {
 		Write-Error "Required build output not found: $f"
+		exit 1
+	}
+}
+
+# Bundled libssh2 (see bin\update-libssh2.ps1). Without it the plugin falls back
+# to whatever libssh2.dll is on PATH, which may be too old for modern servers.
+$Libssh2Dir  = Join-Path $ProjectRoot "deps\libssh2"
+$Libssh2Hash = Join-Path $Libssh2Dir "libssh2.sha256"
+$Libssh2Files = @(
+	@{ Name = "libssh2.dll";    Path = Join-Path $Libssh2Dir "libssh2.dll" },
+	@{ Name = "64/libssh2.dll"; Path = Join-Path $Libssh2Dir "64\libssh2.dll" },
+	@{ Name = "libssh2-COPYING.txt"; Path = Join-Path $Libssh2Dir "COPYING" }
+)
+
+foreach ($f in $Libssh2Files + @(@{ Path = $Libssh2Hash })) {
+	if (-not (Test-Path $f.Path)) {
+		Write-Error "Required libssh2 file not found: $($f.Path). Run bin\update-libssh2.ps1."
+		exit 1
+	}
+}
+
+foreach ($line in Get-Content $Libssh2Hash) {
+	if (-not $line.Trim()) { continue }
+	$expected, $rel = $line -split '\s+', 2
+	$actual = (Get-FileHash (Join-Path $Libssh2Dir $rel) -Algorithm SHA256).Hash
+	if ($actual -ne $expected) {
+		Write-Error "SHA256 mismatch for deps\libssh2\$rel (expected $expected, got $actual)."
 		exit 1
 	}
 }
@@ -79,8 +107,8 @@ try {
 		}
 	}
 
-	# Add compiled plugin files
-	foreach ($entry in @(@{ Name = "sftpplug.wfx"; Path = $Wfx32 }, @{ Name = "sftpplug.wfx64"; Path = $Wfx64 })) {
+	# Add compiled plugin files and the bundled libssh2
+	foreach ($entry in @(@{ Name = "sftpplug.wfx"; Path = $Wfx32 }, @{ Name = "sftpplug.wfx64"; Path = $Wfx64 }) + $Libssh2Files) {
 		[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
 			$zip,
 			$entry.Path,
