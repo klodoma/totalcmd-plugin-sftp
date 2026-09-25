@@ -650,10 +650,150 @@ void myfree(void *ptr, void **abstract)
         free(ptr);
 }
 
+// An OpenSSH private key file is a few KB at most; cap what we are willing to parse.
+#define MAX_OPENSSH_KEYFILE_SIZE 32768
+
 BOOL ismimechar(char ch)
 {
     return ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '/' ||
             ch == '+' || ch == '=' || ch == '\r' || ch == '\n');
+}
+
+// Read a length-prefixed string from an OpenSSH key blob. Returns false when the
+// blob is too short, otherwise advances *offset past the string.
+static BOOL ReadOpenSshString(const unsigned char *blob, int bloblen, int *offset, const unsigned char **value,
+                              int *valuelen)
+{
+    if (*offset < 0 || bloblen - *offset < 4)
+        return false;
+    unsigned int len = ((unsigned int)blob[*offset] << 24) | ((unsigned int)blob[*offset + 1] << 16) |
+                       ((unsigned int)blob[*offset + 2] << 8) | (unsigned int)blob[*offset + 3];
+    if (len > (unsigned int)(bloblen - *offset - 4))
+        return false;
+    *offset += 4;
+    if (value)
+        *value = blob + *offset;
+    if (valuelen)
+        *valuelen = (int)len;
+    *offset += (int)len;
+    return true;
+}
+
+static void MimeEncodeBinary(const unsigned char *data, int datalen, char *out, int maxlen)
+{
+    static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    int o = 0;
+    for (int i = 0; i < datalen && o + 4 < maxlen; i += 3)
+    {
+        int b0 = data[i];
+        int b1 = (i + 1 < datalen) ? data[i + 1] : 0;
+        int b2 = (i + 2 < datalen) ? data[i + 2] : 0;
+        out[o++] = alphabet[b0 >> 2];
+        out[o++] = alphabet[((b0 & 3) << 4) | (b1 >> 4)];
+        out[o++] = (i + 1 < datalen) ? alphabet[((b1 & 15) << 2) | (b2 >> 6)] : '=';
+        out[o++] = (i + 2 < datalen) ? alphabet[b2 & 63] : '=';
+    }
+    out[o] = 0;
+}
+
+// libssh2 cannot compute the public key itself when the private key uses the newer
+// "-----BEGIN OPENSSH PRIVATE KEY-----" container (ed25519 keys always do), so logging
+// in with such a key and no matching *.pub file next to it fails with a generic error -
+// while "ssh" itself works, because OpenSSH derives the public key on its own.
+// That container stores the public key in clear text (the passphrase only covers the
+// private half), so extract it here and hand libssh2 a temporary *.pub file.
+// Returns true and fills pubkeyfile with the temporary file's name; the caller deletes it.
+static BOOL DeriveOpenSshPublicKeyFile(const char *privkeyfile, char *pubkeyfile, int pubkeyfileSize)
+{
+    const char beginmarker[] = "-----BEGIN OPENSSH PRIVATE KEY-----";
+    const char endmarker[] = "-----END OPENSSH PRIVATE KEY-----";
+    const char magic[] = "openssh-key-v1";
+
+    pubkeyfile[0] = 0;
+
+    HANDLE hf = CreateFile(privkeyfile, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    if (hf == INVALID_HANDLE_VALUE)
+        return false;
+
+    char *filebuf = (char *)malloc(MAX_OPENSSH_KEYFILE_SIZE + 1);
+    unsigned char *blob = (unsigned char *)malloc(MAX_OPENSSH_KEYFILE_SIZE + 1);
+    BOOL result = false;
+    DWORD dataread = 0;
+
+    if (filebuf && blob && ReadFile(hf, filebuf, MAX_OPENSSH_KEYFILE_SIZE, &dataread, NULL))
+    {
+        filebuf[dataread] = 0;
+        char *begin = strstr(filebuf, beginmarker);
+        char *end = begin ? strstr(begin, endmarker) : NULL;
+        if (begin && end)
+        {
+            begin += sizeof(beginmarker) - 1;
+            int bloblen = MimeDecode(begin, (int)(end - begin), (char *)blob, MAX_OPENSSH_KEYFILE_SIZE);
+            // openssh-key-v1\0, ciphername, kdfname, kdfoptions, key count, first public key
+            int offset = (int)sizeof(magic); // includes the terminating zero byte
+            const unsigned char *pubblob = NULL;
+            int pubbloblen = 0, keycount = 0;
+            if (bloblen > offset && memcmp(blob, magic, sizeof(magic)) == 0 &&
+                ReadOpenSshString(blob, bloblen, &offset, NULL, NULL) && // ciphername
+                ReadOpenSshString(blob, bloblen, &offset, NULL, NULL) && // kdfname
+                ReadOpenSshString(blob, bloblen, &offset, NULL, NULL) && // kdfoptions
+                bloblen - offset >= 4)
+            {
+                keycount = (blob[offset] << 24) | (blob[offset + 1] << 16) | (blob[offset + 2] << 8) | blob[offset + 3];
+                offset += 4;
+            }
+            int typeoffset = 0, typelen = 0;
+            const unsigned char *type = NULL;
+            if (keycount > 0 && ReadOpenSshString(blob, bloblen, &offset, &pubblob, &pubbloblen) &&
+                ReadOpenSshString(pubblob, pubbloblen, &typeoffset, &type, &typelen) && typelen > 0)
+            {
+                char temppath[MAX_PATH], tempfile[MAX_PATH];
+                if (GetTempPath(sizeof(temppath) - 1, temppath) && GetTempFileName(temppath, "ssh", 0, tempfile))
+                {
+                    // "<key type> <base64 of the public key blob> <comment>"
+                    int linelen = typelen + 2 + (pubbloblen + 2) / 3 * 4 + 32;
+                    char *line = (char *)malloc(linelen);
+                    if (line)
+                    {
+                        // "type" points into the blob and is not zero terminated.
+                        memcpy(line, type, typelen);
+                        line[typelen] = 0;
+                        strlcat(line, " ", linelen - 1);
+                        MimeEncodeBinary(pubblob, pubbloblen, line + strlen(line), linelen - (int)strlen(line));
+                        strlcat(line, " sftpplug\n", linelen - 1);
+
+                        HANDLE hout = CreateFile(tempfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                                                 FILE_ATTRIBUTE_TEMPORARY, NULL);
+                        DWORD written = 0;
+                        if (hout != INVALID_HANDLE_VALUE)
+                        {
+                            result = WriteFile(hout, line, (DWORD)strlen(line), &written, NULL) != 0;
+                            CloseHandle(hout);
+                        }
+                        OverwriteWithZeroes(line, linelen);
+                        free(line);
+                    }
+                    if (result)
+                        strlcpy(pubkeyfile, tempfile, pubkeyfileSize - 1);
+                    else
+                        DeleteFile(tempfile);
+                }
+            }
+        }
+    }
+    CloseHandle(hf);
+    if (filebuf)
+    {
+        OverwriteWithZeroes(filebuf, MAX_OPENSSH_KEYFILE_SIZE + 1);
+        free(filebuf);
+    }
+    if (blob)
+    {
+        OverwriteWithZeroes((char *)blob, MAX_OPENSSH_KEYFILE_SIZE + 1);
+        free(blob);
+    }
+    return result;
 }
 
 BOOL ProgressLoop(char *progresstext, int start, int end, int *loopval, DWORD *lasttime)
@@ -1920,6 +2060,15 @@ int SftpConnect(pConnectSettings ConnectSettings)
                     if (haspubkey && strcmp(pubkeyfile, privkeyfile) == 0)
                         pubkeyfileptr = NULL;
 
+                    // No usable *.pub file: libssh2 can work out the public key itself for the
+                    // classic PEM formats, but not for "-----BEGIN OPENSSH PRIVATE KEY-----"
+                    // (which is what ed25519 keys always use). Extract it ourselves in that case.
+                    char derivedpubkeyfile[MAX_PATH];
+                    derivedpubkeyfile[0] = 0;
+                    if (!pubkeyfileptr && DeriveOpenSshPublicKeyFile(privkeyfile, derivedpubkeyfile,
+                                                                     sizeof(derivedpubkeyfile)))
+                        pubkeyfileptr = derivedpubkeyfile;
+
                     LoadStr(buf, IDS_AUTH_PUBKEY);
                     while ((auth = libssh2_userauth_publickey_fromfile(ConnectSettings->session, ConnectSettings->user,
                                                                        pubkeyfileptr, privkeyfile, passphrase)) ==
@@ -1929,6 +2078,9 @@ int SftpConnect(pConnectSettings ConnectSettings)
                             break;
                         IsSocketReadable(ConnectSettings->sock); // sleep to avoid 100% CPU!
                     }
+                    if (derivedpubkeyfile[0])
+                        DeleteFile(derivedpubkeyfile);
+
                     if (auth == LIBSSH2_ERROR_AUTHENTICATION_FAILED)
                         auth_pw = 1;
                     else if (auth)
