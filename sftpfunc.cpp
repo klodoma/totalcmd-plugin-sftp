@@ -733,14 +733,16 @@ static BOOL DeriveOpenSshPublicKeyFile(const char *privkeyfile, char *pubkeyfile
             // openssh-key-v1\0, ciphername, kdfname, kdfoptions, key count, first public key
             int offset = (int)sizeof(magic); // includes the terminating zero byte
             const unsigned char *pubblob = NULL;
-            int pubbloblen = 0, keycount = 0;
+            int pubbloblen = 0;
+            unsigned int keycount = 0;
             if (bloblen > offset && memcmp(blob, magic, sizeof(magic)) == 0 &&
                 ReadOpenSshString(blob, bloblen, &offset, NULL, NULL) && // ciphername
                 ReadOpenSshString(blob, bloblen, &offset, NULL, NULL) && // kdfname
                 ReadOpenSshString(blob, bloblen, &offset, NULL, NULL) && // kdfoptions
                 bloblen - offset >= 4)
             {
-                keycount = (blob[offset] << 24) | (blob[offset + 1] << 16) | (blob[offset + 2] << 8) | blob[offset + 3];
+                keycount = ((unsigned int)blob[offset] << 24) | ((unsigned int)blob[offset + 1] << 16) |
+                           ((unsigned int)blob[offset + 2] << 8) | (unsigned int)blob[offset + 3];
                 offset += 4;
             }
             int typeoffset = 0, typelen = 0;
@@ -749,7 +751,9 @@ static BOOL DeriveOpenSshPublicKeyFile(const char *privkeyfile, char *pubkeyfile
                 ReadOpenSshString(pubblob, pubbloblen, &typeoffset, &type, &typelen) && typelen > 0)
             {
                 char temppath[MAX_PATH], tempfile[MAX_PATH];
-                if (GetTempPath(sizeof(temppath) - 1, temppath) && GetTempFileName(temppath, "ssh", 0, tempfile))
+                DWORD temppathlen = GetTempPath(sizeof(temppath), temppath);
+                if (temppathlen > 0 && temppathlen <= MAX_PATH - 14 &&
+                    GetTempFileName(temppath, "ssh", 0, tempfile))
                 {
                     // "<key type> <base64 of the public key blob> <comment>"
                     int linelen = typelen + 2 + (pubbloblen + 2) / 3 * 4 + 32;
@@ -768,7 +772,8 @@ static BOOL DeriveOpenSshPublicKeyFile(const char *privkeyfile, char *pubkeyfile
                         DWORD written = 0;
                         if (hout != INVALID_HANDLE_VALUE)
                         {
-                            result = WriteFile(hout, line, (DWORD)strlen(line), &written, NULL) != 0;
+                            DWORD towrite = (DWORD)strlen(line);
+                            result = WriteFile(hout, line, towrite, &written, NULL) != 0 && written == towrite;
                             CloseHandle(hout);
                         }
                         OverwriteWithZeroes(line, linelen);
